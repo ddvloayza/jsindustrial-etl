@@ -7,15 +7,15 @@
   "log_dir": "C:\\Mantra\\logs",
   "country_code": "51",
   "custom_fields": {
-    "custom_1": "N° Cotización",
-    "custom_2": "Fecha",
-    "custom_3": "Cliente",
-    "custom_4": "Condicion de venta",
-    "custom_5": "Vendedor",
-    "custom_6": "Fuente de contacto",
-    "custom_7": "Referencia",
-    "custom_8": "Moneda",
-    "custom_9": "Total Docum.",
-    "custom_10": "Status_Oferta"
+    "custom_1": "numero_cotizacion",
+    "custom_2": "fecha",
+    "custom_3": "cliente",
+    "custom_4": "condicion_venta",
+    "custom_5": "vendedor",
+    "custom_6": "fuente_contacto",
+    "custom_7": "referencia",
+    "custom_8": "moneda",
+    "custom_9": "total_documento",
+    "custom_10": "estado_oferta"
   }
 }

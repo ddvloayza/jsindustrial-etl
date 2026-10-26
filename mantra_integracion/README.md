@@ -7,12 +7,24 @@ La imagen refleja la propuesta original. **El alcance actual termina en crear o 
 ## Flujo implementado
 
 1. El Programador de tareas de Windows ejecuta `run_mantra.ps1` una vez al día.
-2. Python llama `dbo.usp_ExportarCotizacionesMantra` para la fecha anterior (zona horaria de Lima).
+2. Python llama `dbo.usp_ExportarCotizacionesMantra` para la fecha anterior (zona horaria de Lima). El SP devuelve una fila `payload_json` con un arreglo de cotizaciones; Python lee y valida sus 23 propiedades por elemento.
 3. Valida nombre y teléfono. Para Perú acepta nueve dígitos que empiecen en 9, con o sin prefijo 51, y envía `countryCode="51"` separado del teléfono.
 4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta diez `custom_*`.
 5. Escribe un TXT diario `mantra_AAAAMMDD.txt` con registros JSON por línea: hora, identificador de cotización, etapa, HTTP y resultado. No incluye credenciales ni teléfono/correo. Si se vuelve a procesar un contacto, Mantra lo actualiza por número telefónico.
 
-La documentación del API solo ofrece nombre, teléfono, correo y diez campos `custom_1` a `custom_10`. El SP devuelve las 23 columnas del Excel, pero la configuración prioriza diez para Mantra. Nombre, teléfono y correo se envían en sus campos propios. El mapeo de `custom_*` se puede cambiar en `config.json` sin modificar código. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos.
+La documentación del API solo ofrece nombre, teléfono, correo y diez campos `custom_1` a `custom_10`. El JSON del SP conserva las 23 columnas del Excel como propiedades con nombres `snake_case`, pero la configuración prioriza diez para Mantra. Nombre, teléfono y correo se envían en sus campos propios. El mapeo de `custom_*` se puede cambiar en `config.json` sin modificar código. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto del JSON representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
+
+## Probar con el JSON ficticio
+
+Desde `mantra_integracion/`, ejecuta:
+
+```bash
+python exportar_contactos.py --config config.example.json --json-file contactos_prueba.json --log-dir ./logs
+```
+
+En Windows el comando es el mismo, usando `py` si así está instalado Python. Este modo no requiere SQL Server, `groupId` ni API key; valida los dos objetos de ejemplo y escribe el resultado en `./logs`. No llama a Mantra. El archivo `contactos_prueba.json` lleva `_solo_prueba: true` en cada objeto, por lo que el script rechaza `--apply` con ese archivo.
+
+Para un JSON generado desde SQL Server, el SP se puede ejecutar con `EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde='2026-02-02', @FechaHasta='2026-02-02';`. Copia el contenido de `payload_json` a un archivo UTF-8 si quieres probarlo con `--json-file`. En la ejecución diaria, Python obtiene ese mismo JSON directamente del SP, sin archivo intermedio. Un archivo con datos reales, sin la marca `_solo_prueba`, se puede enviar con `--apply` cuando estén configuradas las credenciales y se haya revisado el contenido.
 
 ## Preparación en Windows
 

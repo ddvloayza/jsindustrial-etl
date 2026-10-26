@@ -3,14 +3,15 @@
   Fuente disponible: dbo.CotizacionesC del backup BD_MANTRA.bak.
   Los campos sin origen verificado se devuelven NULL; los que requieren
   catálogos externos devuelven su código/ID provisional (ver mapeo.md).
-  Este SP prepara datos. La llamada HTTP a Mantra debe hacerla el integrador
+  Este SP devuelve un arreglo JSON con una entrada por cotización seleccionada.
+  La llamada HTTP a Mantra debe hacerla el integrador
   una vez confirmado el contrato del API y las equivalencias de catálogos.
 */
 CREATE OR ALTER PROCEDURE dbo.usp_ExportarCotizacionesMantra
     @FechaDesde date = NULL,
     @FechaHasta date = NULL,
     @Codidtcot char(10) = NULL,
-    @ComoJson bit = 0
+    @ComoJson bit = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -111,4 +112,5 @@ GO
 
 -- Ejemplos:
 -- EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde='2026-02-02', @FechaHasta='2026-02-02';
--- EXEC dbo.usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO', @ComoJson=1;
+-- EXEC dbo.usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO';
+-- Para ver las columnas como tabla: EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;

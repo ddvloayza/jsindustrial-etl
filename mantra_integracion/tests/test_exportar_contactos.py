@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from datetime import date
@@ -9,15 +10,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import exportar_contactos as app
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
 class ContactExportTests(unittest.TestCase):
     def setUp(self):
-        self.config = app.load_config(Path(__file__).resolve().parents[1] / "config.example.json")
-        self.row = {name: None for name in app.ALL_COLUMNS}
+        self.config = app.load_config(ROOT / "config.example.json")
+        self.row = {name: None for name in app.ALL_JSON_FIELDS}
         self.row.update({
-            "N° Cotización": "0001-0027924-1", "Fecha": date(2026, 2, 2),
-            "Cliente": "CLIENTE PRUEBA", "Nombre del contacto": "MIGUEL MORALES",
-            "Telefono": "+51 987 549 210", "email": "miguel@example.com",
-            "Moneda": "US$", "Total Docum.": 100,
+            "numero_cotizacion": "0001-0027924-1", "fecha": "2026-02-02",
+            "cliente": "CLIENTE PRUEBA", "nombre_contacto": "MIGUEL MORALES",
+            "telefono": "+51 987 549 210", "email": "miguel@example.com",
+            "moneda": "US$", "total_documento": 100,
         })
 
     def test_phone_and_ten_custom_fields(self):
@@ -30,9 +34,26 @@ class ContactExportTests(unittest.TestCase):
         self.assertNotIn("custom_11", data)
 
     def test_invalid_phone_is_not_sent(self):
-        self.row["Telefono"] = "012345678"
+        self.row["telefono"] = "012345678"
         with self.assertRaisesRegex(ValueError, "Teléfono inválido"):
             app.build_contact(self.row, self.config)
+
+    def test_sp_json_is_read(self):
+        cursor = Mock()
+        cursor.fetchall.return_value = [{"payload_json": json.dumps([self.row])}]
+        connection = Mock()
+        connection.cursor.return_value = cursor
+        with patch.object(app.pymssql, "connect", return_value=connection), patch.dict(
+            app.os.environ, {"MANTRA_SQL_USER": "test", "MANTRA_SQL_PASSWORD": "test"}
+        ):
+            rows = app.fetch_rows(self.config, date(2026, 2, 2))
+        self.assertEqual(rows, [self.row])
+        self.assertIn("@ComoJson=1", cursor.execute.call_args.args[0])
+        connection.close.assert_called_once()
+
+    def test_json_requires_all_23_fields(self):
+        with self.assertRaisesRegex(ValueError, "le faltan propiedades"):
+            app.parse_contacts_json('[{"telefono":"987549210"}]')
 
     def test_upsert_only(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -50,13 +71,21 @@ class ContactExportTests(unittest.TestCase):
             self.assertEqual(request.call_args_list[0].args[2]["data"]["phone"], "987549210")
             self.assertIn("contacto", next(Path(temporary).glob("mantra_*.txt")).read_text())
 
-    def test_dry_run_does_not_call_api(self):
+    def test_sample_json_dry_run(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
-            with patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(app, "post") as request:
-                summary = app.run(self.config, date(2026, 2, 2), apply_changes=False)
+            with patch.object(app, "fetch_rows") as db, patch.object(app, "post") as request:
+                summary = app.run(self.config, date(2026, 2, 2), False, ROOT / "contactos_prueba.json")
+            self.assertEqual(summary["seleccionados"], 2)
             self.assertEqual(summary["errores"], 0)
+            db.assert_not_called()
             request.assert_not_called()
+
+    def test_sample_json_cannot_be_applied(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.config["log_dir"] = temporary
+            with self.assertRaisesRegex(ValueError, "no se puede enviar"):
+                app.run(self.config, date(2026, 2, 2), True, ROOT / "contactos_prueba.json")
 
 
 if __name__ == "__main__":
