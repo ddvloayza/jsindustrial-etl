@@ -10,7 +10,7 @@ import probar_mantra
 
 class CredentialProbeTests(unittest.TestCase):
     def test_missing_variables_stops_before_http(self):
-        with patch.dict(probar_mantra.os.environ, {}, clear=True), patch.object(
+        with patch.object(probar_mantra, "load_dotenv"), patch.dict(probar_mantra.os.environ, {}, clear=True), patch.object(
             sys, "argv", ["probar_mantra.py", "--phone", "987654321"]
         ), patch.object(probar_mantra, "post") as post, patch("sys.stderr", new_callable=io.StringIO) as stderr:
             self.assertEqual(probar_mantra.main(), 2)
@@ -19,7 +19,7 @@ class CredentialProbeTests(unittest.TestCase):
 
     def test_read_only_404_confirms_credentials_without_write(self):
         response = Mock(status_code=404)
-        with patch.dict(probar_mantra.os.environ, {
+        with patch.object(probar_mantra, "load_dotenv"), patch.dict(probar_mantra.os.environ, {
             "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"
         }), patch.object(sys, "argv", ["probar_mantra.py", "--phone", "987654321"]), patch.object(
             probar_mantra, "post", return_value=response
@@ -30,7 +30,7 @@ class CredentialProbeTests(unittest.TestCase):
 
     def test_upsert_uses_only_contacts_new(self):
         response = Mock(status_code=201)
-        with patch.dict(probar_mantra.os.environ, {
+        with patch.object(probar_mantra, "load_dotenv"), patch.dict(probar_mantra.os.environ, {
             "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"
         }), patch.object(sys, "argv", ["probar_mantra.py", "--phone", "987654321", "--name", "Prueba"]), patch.object(
             probar_mantra, "post", return_value=response

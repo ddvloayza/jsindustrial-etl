@@ -3,13 +3,16 @@
 import argparse
 import os
 import sys
+from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 
 from exportar_contactos import BASE_URL, normalize_phone, post, response_detail
 
 
 def main() -> int:
+    load_dotenv(Path(__file__).with_name(".env"))
     parser = argparse.ArgumentParser(description="Prueba la conexión con Mantra sin mostrar credenciales")
     parser.add_argument("--phone", required=True, help="Número de prueba autorizado, con o sin prefijo de país")
     parser.add_argument("--country-code", default="51")

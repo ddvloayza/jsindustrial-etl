@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 import pymssql
 import requests
+from dotenv import load_dotenv
 
 
 BASE_URL = "https://wbpback.mantra.chat"
@@ -108,6 +109,8 @@ def parse_contacts_json(payload: str) -> list[dict]:
 
 def fetch_rows(config: dict, run_date: date) -> list[dict]:
     sql = config["sql"]
+    if not os.getenv("MANTRA_SQL_USER") or not os.getenv("MANTRA_SQL_PASSWORD"):
+        raise ValueError("Faltan MANTRA_SQL_USER o MANTRA_SQL_PASSWORD")
     connection = pymssql.connect(
         server=sql["server"], port=int(sql.get("port", 1433)),
         user=os.environ["MANTRA_SQL_USER"], password=os.environ["MANTRA_SQL_PASSWORD"],
@@ -208,6 +211,7 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
 
 
 def main() -> int:
+    load_dotenv(Path(__file__).with_name(".env"))
     parser = argparse.ArgumentParser(description="Exporta contactos de SQL Server a Mantra")
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--fecha", type=date.fromisoformat, help="Fecha a procesar, AAAA-MM-DD; por defecto ayer en Lima")
