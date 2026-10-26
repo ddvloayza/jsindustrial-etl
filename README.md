@@ -2,6 +2,12 @@
 
 Piloto para seleccionar cotizaciones en SQL Server, crear o actualizar sus contactos en Mantra y enviar una plantilla aprobada. Incluye el esquema extraído del backup, el procedimiento almacenado y el integrador Python.
 
+## Flujo técnico
+
+![Flujo técnico de la propuesta: tarea programada, SQL Server, script Python, Mantra API y archivo TXT diario](docs/flujo-mantra.png)
+
+Imagen extraída de la página 2 de la propuesta. La hora de las 5:00 p. m. que aparece en ella es ilustrativa; el horario real se define al registrar la tarea.
+
 ## Carpetas
 
 - [`diagrama-mantra/`](diagrama-mantra/): diagrama editable de entidades, esquema JSON, auditoría de campos y `usp_ExportarCotizacionesMantra.sql`.

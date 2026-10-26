@@ -1,5 +1,7 @@
 # Integración piloto SQL Server → Mantra
 
+![Flujo técnico de la propuesta](../docs/flujo-mantra.png)
+
 ## Flujo implementado
 
 1. El Programador de tareas de Windows ejecuta `run_mantra.ps1` una vez al día.
