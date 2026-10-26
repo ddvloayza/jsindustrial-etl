@@ -4,6 +4,7 @@ __pycache__/
 .env.*
 !*.example
 mantra_integracion/config.json
+mantra_integracion/*.local.json
 logs/
 mantra_*.txt
 *.bak

@@ -15,8 +15,8 @@ Imagen original extraída de la página 2 de la propuesta. Allí figura un enví
 
 ## Estado
 
-Una versión anterior del SP se compiló contra una restauración temporal del backup y se probó con una fila que luego se revirtió. La versión actual devuelve un arreglo JSON con los diez campos elegidos para Mantra más nombre, teléfono y correo por cotización. El integrador lee ese JSON directamente del SP o desde [`contactos_prueba.json`](mantra_integracion/contactos_prueba.json) para una simulación sin SQL Server. Pasó pruebas locales con llamadas HTTP simuladas. No se ha ejecutado en el servidor del cliente ni se han enviado contactos reales a Mantra.
+Una versión anterior del SP se compiló contra una restauración temporal del backup y se probó con una fila que luego se revirtió. La versión actual devuelve un arreglo JSON con los diez campos elegidos para Mantra más nombre, teléfono y correo por cotización. El integrador lee ese JSON directamente del SP o desde [`contactos_prueba.json`](mantra_integracion/contactos_prueba.json) para una simulación sin SQL Server. Se creó un contacto de prueba autorizado en Mantra (HTTP 201) y la consulta posterior confirmó nombre, teléfono, código de país y los diez campos personalizados. El SP actual aún no se ha ejecutado en el servidor del cliente.
 
-Faltan la regla definitiva de selección, equivalencias de códigos, `groupId`, `apiKey` y una prueba de extremo a extremo con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP selecciona esos diez en su JSON.
+Faltan la regla definitiva de selección, equivalencias de códigos y una prueba de extremo a extremo desde SQL Server con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP selecciona esos diez en su JSON. Las credenciales de Mantra se guardan solo en el `.env` local, que Git ignora.
 
 Los archivos fuente con datos de clientes, backup, credenciales y logs operativos no se versionan.

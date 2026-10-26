@@ -69,4 +69,4 @@ El paso 2 escribe en Mantra, pero no envía ningún WhatsApp.
 - Definir equivalencias de los códigos de vendedor, condición de venta, fuente y estado si Mantra necesita sus descripciones.
 - Mantener y respaldar la carpeta de TXT para revisar resultados y errores de cada ejecución.
 
-No se ha hecho una prueba real contra Mantra ni se ha instalado una tarea en el servidor del cliente; faltan credenciales, datos autorizados y acceso al servidor.
+Se creó un contacto de prueba autorizado en Mantra (HTTP 201, `created`) y una consulta posterior confirmó los 13 datos enviados. El JSON de esa prueba se guardó en `contacto_envio.local.json`, ignorado por Git. Aún no se ha probado el SP actual contra el servidor del cliente ni se ha instalado una tarea programada allí.
