@@ -1,7 +1,7 @@
 """Crea o actualiza contactos de SQL Server en Mantra. No envía mensajes.
 
-El SP entrega un arreglo JSON con 10 campos personalizados y los datos de contacto.
-La API admite name, phone, countryCode, email y 10 campos custom.
+El SP entrega un arreglo JSON con los 10 campos seleccionados y los datos de contacto.
+El API guarda al menos custom_1 a custom_20; esta integración usa los primeros 10.
 """
 
 from __future__ import annotations
