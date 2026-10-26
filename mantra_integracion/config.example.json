@@ -1,0 +1,21 @@
+{
+  "sql": {
+    "server": "SERVIDOR_SQL",
+    "port": 1433,
+    "database": "BD_MANTRA"
+  },
+  "log_dir": "C:\\Mantra\\logs",
+  "country_code": "51",
+  "custom_fields": {
+    "custom_1": "N° Cotización",
+    "custom_2": "Fecha",
+    "custom_3": "Cliente",
+    "custom_4": "Condicion de venta",
+    "custom_5": "Vendedor",
+    "custom_6": "Fuente de contacto",
+    "custom_7": "Referencia",
+    "custom_8": "Moneda",
+    "custom_9": "Total Docum.",
+    "custom_10": "Status_Oferta"
+  }
+}

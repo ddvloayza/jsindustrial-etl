@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!*.example
+mantra_integracion/config.json
+logs/
+mantra_*.txt
+*.bak
+*.xlsx
+*.pdf
+.DS_Store

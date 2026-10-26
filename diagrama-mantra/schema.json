@@ -1,0 +1,1025 @@
+{
+  "database": "MANTRA_DIAGRAM",
+  "tables": [
+    {
+      "name": "dbo.CotizacionesC",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "codidtcot",
+          "type": "char(10)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "fecemidoc",
+          "type": "datetime",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codtipmon",
+          "type": "char(3)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numtipcam",
+          "type": "numeric(10,4)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codfmapag",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codidtloc",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codvalofe",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codpzoent",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtrefcot",
+          "type": "varchar(50)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtobsadi",
+          "type": "varchar(3000)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codidtmtr",
+          "type": "char(20)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtrazsoc",
+          "type": "varchar(100)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtnomatt",
+          "type": "varchar(70)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txttlf001",
+          "type": "varchar(20)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtcorele",
+          "type": "varchar(70)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numimpemb",
+          "type": "numeric(12,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numimpdct",
+          "type": "numeric(12,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numimpigv",
+          "type": "numeric(12,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numimpvta",
+          "type": "numeric(12,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numswtprn",
+          "type": "bit",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numporigv",
+          "type": "numeric(5,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numdocnul",
+          "type": "bit",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "codmtrven",
+          "type": "char(8)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numpedgen",
+          "type": "bit",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numtipprn",
+          "type": "tinyint",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((1))",
+          "primary_key": false
+        },
+        {
+          "name": "numdeccut",
+          "type": "bit",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "codclasif",
+          "type": "char(3)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "('MER')",
+          "primary_key": false
+        },
+        {
+          "name": "codcontac",
+          "type": "int",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "codtip_SN",
+          "type": "char(1)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "coddocidt",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtnroidt",
+          "type": "varchar(20)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtdirec1",
+          "type": "varchar(100)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codubige1",
+          "type": "varchar(6)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cod_pais1",
+          "type": "char(4)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codidtusr",
+          "type": "int",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "fechrareg",
+          "type": "datetime",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codlispre",
+          "type": "int",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numtasdct",
+          "type": "numeric(20,5)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numtotdct",
+          "type": "numeric(25,6)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "txtserdoc",
+          "type": "varchar(7)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtnrodoc",
+          "type": "varchar(8)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtnrorev",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codtercom",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codgarant",
+          "type": "char(2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numredond",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numsubtot",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totexoner",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totinafec",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totafecto",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tototrcrg",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totimpuesto",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numtotdoc",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "estad_aprob",
+          "type": "char(1)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "id_estdoc",
+          "type": "char(1)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ID_Item_Serv",
+          "type": "char(1)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "Obj_Type",
+          "type": "char(3)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tasa_exito_cierre",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ID_Status_Oferta",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "Fec_Cierre_Exito",
+          "type": "datetime",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ID_Perdida_Oferta",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "sys_version",
+          "type": "varchar(15)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ID_Canal_Origen",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "eqv_interfase_web",
+          "type": "varchar(35)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "idhistory",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__CotizacionesC__68336F3E",
+          "primary_key": true,
+          "unique": true,
+          "columns": [
+            "codidtcot"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dbo.CotizacionesD",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "codidtcot",
+          "type": "char(10)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "numitmart",
+          "type": "int",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "codidtart",
+          "type": "char(12)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtdscart",
+          "type": "varchar(150)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codidtasg",
+          "type": "varchar(75)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "txtgloadi",
+          "type": "varchar(7000)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codundmed",
+          "type": "char(5)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "codidtmka",
+          "type": "char(4)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numqtdart",
+          "type": "numeric(12,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numpreart",
+          "type": "numeric(25,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numdctvta",
+          "type": "numeric(20,5)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numdctvt2",
+          "type": "numeric(20,5)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numvaldct",
+          "type": "numeric(15,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numvalvta",
+          "type": "numeric(15,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "codidtalm",
+          "type": "char(5)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "('01')",
+          "primary_key": false
+        },
+        {
+          "name": "numaplcor",
+          "type": "bit",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numqtdped",
+          "type": "numeric(15,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numgratis",
+          "type": "bit",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numpreuni",
+          "type": "numeric(25,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "numdctvt3",
+          "type": "numeric(20,5)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "preuniigv",
+          "type": "numeric(25,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "preart_cimpto",
+          "type": "numeric(20,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "preuni_cimpto",
+          "type": "numeric(20,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "subtot_cimpto",
+          "type": "numeric(20,7)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "INMPrice",
+          "type": "numeric(25,6)",
+          "nullable": false,
+          "identity": false,
+          "computed": false,
+          "default": "((0))",
+          "primary_key": false
+        },
+        {
+          "name": "codImpuesto",
+          "type": "char(5)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "tasImpuesto",
+          "type": "numeric(20,6)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "totImpuesto",
+          "type": "numeric(20,6)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numprenet",
+          "type": "numeric(25,7)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "prenet_cimpto",
+          "type": "numeric(25,7)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numsubitm",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numvisitm",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numprelis",
+          "type": "numeric(20,6)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "prelis_cimpto",
+          "type": "numeric(20,6)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numfactor1",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numfactor2",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "swtprnitm",
+          "type": "bit",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "swtprnpre",
+          "type": "bit",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "numqtdbas",
+          "type": "numeric(20,2)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "bas_objtype",
+          "type": "char(3)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "bas_objkey",
+          "type": "varchar(10)",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "bas_objitem",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "itemOrden",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "ID_tip_srv",
+          "type": "int",
+          "nullable": true,
+          "identity": false,
+          "computed": false,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__CotizacionesD__5868B277",
+          "primary_key": true,
+          "unique": true,
+          "columns": [
+            "codidtcot",
+            "numitmart"
+          ]
+        }
+      ]
+    }
+  ],
+  "foreign_keys": [
+    {
+      "name": "FK__Cotizacio__codid__595CD6B0",
+      "from_table": "dbo.CotizacionesD",
+      "to_table": "dbo.CotizacionesC",
+      "column_pairs": [
+        [
+          "codidtcot",
+          "codidtcot"
+        ]
+      ],
+      "on_delete": "NO_ACTION",
+      "on_update": "NO_ACTION"
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2440" height="1320" viewBox="0 0 2440 1320"><rect width="2440" height="1320" fill="#f8fafc"/><text x="70" y="65" fill="#172554" font-family="Arial, sans-serif" font-size="30" font-weight="700" xml:space="preserve">MANTRA  ·  DIAGRAMA DE ENTIDADES</text>
+<text x="72" y="99" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="400" xml:space="preserve">Esquema dbo  |  2 tablas  |  108 campos  |  1 relación declarada</text>
+<line x1="1120" y1="290" x2="1320" y2="290" stroke="#0f766e" stroke-width="3"/>
+<text x="1162" y="264" fill="#0f766e" font-family="Arial, sans-serif" font-size="20" font-weight="700" xml:space="preserve">1 : N</text>
+<text x="1134" y="326" fill="#0f766e" font-family="monospace" font-size="16" font-weight="400" xml:space="preserve">codidtcot</text>
+<text x="1129" y="361" fill="#475569" font-family="Arial, sans-serif" font-size="13" font-weight="400" xml:space="preserve">FK en detalle</text>
+<rect x="70" y="150" width="1050" height="954" fill="#ffffff" stroke="#94a3b8" stroke-width="2" rx="6"/>
+<rect x="70" y="150" width="1050" height="82" fill="#1e3a8a" stroke="#1e3a8a" stroke-width="1" rx="6"/>
+<text x="94" y="188" fill="#ffffff" font-family="Arial, sans-serif" font-size="25" font-weight="700" xml:space="preserve">dbo.CotizacionesC</text>
+<text x="95" y="215" fill="#dbeafe" font-family="Arial, sans-serif" font-size="14" font-weight="400" xml:space="preserve">64 campos  ·  PK: codidtcot</text>
+<line x1="91" y1="243" x2="1099" y2="243" stroke="#94a3b8" stroke-width="1"/>
+<line x1="596" y1="255" x2="596" y2="1087" stroke="#e2e8f0" stroke-width="1"/>
+<text x="94" y="265" fill="#1d4ed8" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">PK    codidtcot             char(10)         NOT NULL</text>
+<text x="94" y="291" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      fecemidoc             datetime         NULL</text>
+<text x="94" y="317" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codtipmon             char(3)          NOT NULL</text>
+<text x="94" y="343" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numtipcam             numeric(10,4)    NULL</text>
+<text x="94" y="369" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codfmapag             char(2)          NULL</text>
+<text x="94" y="395" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtloc             char(2)          NULL</text>
+<text x="94" y="421" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codvalofe             char(2)          NULL</text>
+<text x="94" y="447" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codpzoent             char(2)          NULL</text>
+<text x="94" y="473" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtrefcot             varchar(50)      NULL</text>
+<text x="94" y="499" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtobsadi             varchar(3000)    NULL</text>
+<text x="94" y="525" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtmtr             char(20)         NULL</text>
+<text x="94" y="551" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtrazsoc             varchar(100)     NULL</text>
+<text x="94" y="577" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtnomatt             varchar(70)      NULL</text>
+<text x="94" y="603" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txttlf001             varchar(20)      NULL</text>
+<text x="94" y="629" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtcorele             varchar(70)      NULL</text>
+<text x="94" y="655" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numimpemb             numeric(12,2)    NULL</text>
+<text x="94" y="681" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numimpdct             numeric(12,2)    NULL</text>
+<text x="94" y="707" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numimpigv             numeric(12,2)    NULL</text>
+<text x="94" y="733" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numimpvta             numeric(12,2)    NULL</text>
+<text x="94" y="759" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numswtprn             bit              NOT NULL</text>
+<text x="94" y="785" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numporigv             numeric(5,2)     NULL</text>
+<text x="94" y="811" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numdocnul             bit              NOT NULL</text>
+<text x="94" y="837" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codmtrven             char(8)          NOT NULL</text>
+<text x="94" y="863" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numpedgen             bit              NOT NULL</text>
+<text x="94" y="889" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numtipprn             tinyint          NOT NULL</text>
+<text x="94" y="915" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numdeccut             bit              NOT NULL</text>
+<text x="94" y="941" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codclasif             char(3)          NOT NULL</text>
+<text x="94" y="967" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codcontac             int              NOT NULL</text>
+<text x="94" y="993" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codtip_SN             char(1)          NULL</text>
+<text x="94" y="1019" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      coddocidt             char(2)          NULL</text>
+<text x="94" y="1045" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtnroidt             varchar(20)      NULL</text>
+<text x="94" y="1071" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtdirec1             varchar(100)     NULL</text>
+<text x="601" y="265" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codubige1             varchar(6)       NULL</text>
+<text x="601" y="291" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      cod_pais1             char(4)          NULL</text>
+<text x="601" y="317" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtusr             int              NOT NULL</text>
+<text x="601" y="343" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      fechrareg             datetime         NULL</text>
+<text x="601" y="369" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codlispre             int              NOT NULL</text>
+<text x="601" y="395" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numtasdct             numeric(20,5)    NULL</text>
+<text x="601" y="421" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numtotdct             numeric(25,6)    NOT NULL</text>
+<text x="601" y="447" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtserdoc             varchar(7)       NULL</text>
+<text x="601" y="473" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtnrodoc             varchar(8)       NULL</text>
+<text x="601" y="499" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtnrorev             char(2)          NULL</text>
+<text x="601" y="525" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codtercom             char(2)          NULL</text>
+<text x="601" y="551" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codgarant             char(2)          NULL</text>
+<text x="601" y="577" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numredond             numeric(20,2)    NULL</text>
+<text x="601" y="603" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numsubtot             numeric(20,2)    NULL</text>
+<text x="601" y="629" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      totexoner             numeric(20,2)    NULL</text>
+<text x="601" y="655" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      totinafec             numeric(20,2)    NULL</text>
+<text x="601" y="681" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      totafecto             numeric(20,2)    NULL</text>
+<text x="601" y="707" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      tototrcrg             numeric(20,2)    NULL</text>
+<text x="601" y="733" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      totimpuesto           numeric(20,2)    NULL</text>
+<text x="601" y="759" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numtotdoc             numeric(20,2)    NULL</text>
+<text x="601" y="785" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      estad_aprob           char(1)          NULL</text>
+<text x="601" y="811" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      id_estdoc             char(1)          NULL</text>
+<text x="601" y="837" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      ID_Item_Serv          char(1)          NULL</text>
+<text x="601" y="863" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      Obj_Type              char(3)          NULL</text>
+<text x="601" y="889" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      tasa_exito_cierre     numeric(10,2)    NULL</text>
+<text x="601" y="915" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      ID_Status_Oferta      int              NULL</text>
+<text x="601" y="941" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      Fec_Cierre_Exito      datetime         NULL</text>
+<text x="601" y="967" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      ID_Perdida_Oferta     int              NULL</text>
+<text x="601" y="993" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      sys_version           varchar(15)      NULL</text>
+<text x="601" y="1019" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      ID_Canal_Origen       int              NULL</text>
+<text x="601" y="1045" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      eqv_interfase_web     varchar(35)      NULL</text>
+<text x="601" y="1071" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      idhistory             int              NULL</text>
+<rect x="1320" y="150" width="1050" height="694" fill="#ffffff" stroke="#94a3b8" stroke-width="2" rx="6"/>
+<rect x="1320" y="150" width="1050" height="82" fill="#1e3a8a" stroke="#1e3a8a" stroke-width="1" rx="6"/>
+<text x="1344" y="188" fill="#ffffff" font-family="Arial, sans-serif" font-size="25" font-weight="700" xml:space="preserve">dbo.CotizacionesD</text>
+<text x="1345" y="215" fill="#dbeafe" font-family="Arial, sans-serif" font-size="14" font-weight="400" xml:space="preserve">44 campos  ·  PK: codidtcot, numitmart</text>
+<line x1="1341" y1="243" x2="2349" y2="243" stroke="#94a3b8" stroke-width="1"/>
+<line x1="1846" y1="255" x2="1846" y2="827" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1344" y="265" fill="#1d4ed8" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">PK/FK codidtcot             char(10)         NOT NULL</text>
+<text x="1344" y="291" fill="#1d4ed8" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">PK    numitmart             int              NOT NULL</text>
+<text x="1344" y="317" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtart             char(12)         NOT NULL</text>
+<text x="1344" y="343" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtdscart             varchar(150)     NULL</text>
+<text x="1344" y="369" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtasg             varchar(75)      NULL</text>
+<text x="1344" y="395" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      txtgloadi             varchar(7000)    NULL</text>
+<text x="1344" y="421" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codundmed             char(5)          NOT NULL</text>
+<text x="1344" y="447" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtmka             char(4)          NULL</text>
+<text x="1344" y="473" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numqtdart             numeric(12,2)    NULL</text>
+<text x="1344" y="499" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numpreart             numeric(25,7)    NOT NULL</text>
+<text x="1344" y="525" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numdctvta             numeric(20,5)    NULL</text>
+<text x="1344" y="551" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numdctvt2             numeric(20,5)    NULL</text>
+<text x="1344" y="577" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numvaldct             numeric(15,2)    NULL</text>
+<text x="1344" y="603" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numvalvta             numeric(15,2)    NULL</text>
+<text x="1344" y="629" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codidtalm             char(5)          NOT NULL</text>
+<text x="1344" y="655" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numaplcor             bit              NULL</text>
+<text x="1344" y="681" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numqtdped             numeric(15,2)    NULL</text>
+<text x="1344" y="707" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numgratis             bit              NOT NULL</text>
+<text x="1344" y="733" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numpreuni             numeric(25,7)    NOT NULL</text>
+<text x="1344" y="759" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numdctvt3             numeric(20,5)    NULL</text>
+<text x="1344" y="785" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      preuniigv             numeric(25,7)    NOT NULL</text>
+<text x="1344" y="811" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      preart_cimpto         numeric(20,7)    NOT NULL</text>
+<text x="1851" y="265" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      preuni_cimpto         numeric(20,7)    NOT NULL</text>
+<text x="1851" y="291" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      subtot_cimpto         numeric(20,7)    NOT NULL</text>
+<text x="1851" y="317" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      INMPrice              numeric(25,6)    NOT NULL</text>
+<text x="1851" y="343" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      codImpuesto           char(5)          NULL</text>
+<text x="1851" y="369" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      tasImpuesto           numeric(20,6)    NULL</text>
+<text x="1851" y="395" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      totImpuesto           numeric(20,6)    NULL</text>
+<text x="1851" y="421" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numprenet             numeric(25,7)    NULL</text>
+<text x="1851" y="447" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      prenet_cimpto         numeric(25,7)    NULL</text>
+<text x="1851" y="473" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numsubitm             int              NULL</text>
+<text x="1851" y="499" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numvisitm             int              NULL</text>
+<text x="1851" y="525" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numprelis             numeric(20,6)    NULL</text>
+<text x="1851" y="551" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      prelis_cimpto         numeric(20,6)    NULL</text>
+<text x="1851" y="577" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numfactor1            numeric(10,2)    NULL</text>
+<text x="1851" y="603" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numfactor2            numeric(10,2)    NULL</text>
+<text x="1851" y="629" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      swtprnitm             bit              NULL</text>
+<text x="1851" y="655" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      swtprnpre             bit              NULL</text>
+<text x="1851" y="681" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      numqtdbas             numeric(20,2)    NULL</text>
+<text x="1851" y="707" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      bas_objtype           char(3)          NULL</text>
+<text x="1851" y="733" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      bas_objkey            varchar(10)      NULL</text>
+<text x="1851" y="759" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      bas_objitem           int              NULL</text>
+<text x="1851" y="785" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      itemOrden             int              NULL</text>
+<text x="1851" y="811" fill="#172554" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">      ID_tip_srv            int              NULL</text>
+<text x="70" y="1197" fill="#172554" font-family="Arial, sans-serif" font-size="17" font-weight="700" xml:space="preserve">LEYENDA</text>
+<text x="70" y="1226" fill="#475569" font-family="monospace" font-size="15" font-weight="400" xml:space="preserve">PK = clave primaria     FK = clave foránea     NULL / NOT NULL = permite / no permite valores nulos</text>
+<text x="70" y="1256" fill="#0f766e" font-family="Arial, sans-serif" font-size="15" font-weight="400" xml:space="preserve">CotizacionesD.codidtcot → CotizacionesC.codidtcot   |   Una cabecera puede tener varios renglones de detalle.</text>
+<text x="70" y="1283" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="400" xml:space="preserve">Fuente: backup BD_MANTRA.bak; las relaciones mostradas son las declaradas en SQL Server.</text></svg>
