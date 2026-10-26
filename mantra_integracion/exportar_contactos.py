@@ -1,6 +1,6 @@
 """Crea o actualiza contactos de SQL Server en Mantra. No envía mensajes.
 
-El SP entrega un arreglo JSON con las 23 propiedades de cada cotización.
+El SP entrega un arreglo JSON con 10 campos personalizados y los datos de contacto.
 La API admite name, phone, countryCode, email y 10 campos custom.
 """
 
@@ -24,12 +24,8 @@ import requests
 BASE_URL = "https://wbpback.mantra.chat"
 ALL_JSON_FIELDS = [
     "numero_cotizacion", "fecha", "cliente", "condicion_venta", "vendedor",
-    "fuente_contacto", "referencia", "nombre_contacto", "cargo",
-    "area", "telefono", "email", "moneda", "total_documento",
-    "total_moneda_nacional", "inventario_disponible",
-    "porcentaje_inventario_disponible", "tasa_exito_cierre",
-    "fecha_estimada_cierre", "estado_oferta", "genero_orden_venta",
-    "comentario", "usuario",
+    "fuente_contacto", "referencia", "moneda", "total_documento",
+    "estado_oferta", "nombre_contacto", "telefono", "email",
 ]
 
 
@@ -104,6 +100,9 @@ def parse_contacts_json(payload: str) -> list[dict]:
         missing = set(ALL_JSON_FIELDS) - set(row)
         if missing:
             raise ValueError(f"Al contacto {index + 1} le faltan propiedades: {sorted(missing)}")
+        extra = set(row) - set(ALL_JSON_FIELDS)
+        if extra:
+            raise ValueError(f"El contacto {index + 1} tiene propiedades no exportables: {sorted(extra)}")
     return rows
 
 
@@ -169,7 +168,7 @@ def response_detail(response: requests.Response) -> str:
 
 def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None) -> dict:
     rows = parse_contacts_json(json_file.read_text(encoding="utf-8")) if json_file else fetch_rows(config, run_date)
-    if apply_changes and any(row.get("_solo_prueba") for row in rows):
+    if apply_changes and json_file and json_file.resolve() == (Path(__file__).parent / "contactos_prueba.json").resolve():
         raise ValueError("El JSON de prueba no se puede enviar a Mantra")
     log_dir = Path(config["log_dir"])
     summary = {"seleccionados": len(rows), "contactos_ok": 0, "errores": 0}

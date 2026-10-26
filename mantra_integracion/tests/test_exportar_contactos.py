@@ -51,9 +51,11 @@ class ContactExportTests(unittest.TestCase):
         self.assertIn("@ComoJson=1", cursor.execute.call_args.args[0])
         connection.close.assert_called_once()
 
-    def test_json_requires_all_23_fields(self):
+    def test_json_requires_ten_custom_fields_and_contact_details(self):
         with self.assertRaisesRegex(ValueError, "le faltan propiedades"):
             app.parse_contacts_json('[{"telefono":"987549210"}]')
+        with self.assertRaisesRegex(ValueError, "propiedades no exportables"):
+            app.parse_contacts_json(json.dumps([{**self.row, "comentario": "No exportar"}]))
 
     def test_upsert_only(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -72,6 +74,8 @@ class ContactExportTests(unittest.TestCase):
             self.assertIn("contacto", next(Path(temporary).glob("mantra_*.txt")).read_text())
 
     def test_sample_json_dry_run(self):
+        sample = app.parse_contacts_json((ROOT / "contactos_prueba.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(sample[0]), 13)
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
             with patch.object(app, "fetch_rows") as db, patch.object(app, "post") as request:

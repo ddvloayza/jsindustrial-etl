@@ -15,8 +15,8 @@ Imagen original extraída de la página 2 de la propuesta. Allí figura un enví
 
 ## Estado
 
-El SP se compiló contra una restauración temporal del backup y se probó con una fila que luego se revirtió. Ahora devuelve un arreglo JSON con las 23 propiedades por cotización. El integrador lee ese JSON directamente del SP o desde [`contactos_prueba.json`](mantra_integracion/contactos_prueba.json) para una simulación sin SQL Server. Pasó pruebas locales con llamadas HTTP simuladas. No se ha ejecutado en el servidor del cliente ni se han enviado contactos reales a Mantra.
+Una versión anterior del SP se compiló contra una restauración temporal del backup y se probó con una fila que luego se revirtió. La versión actual devuelve un arreglo JSON con los diez campos elegidos para Mantra más nombre, teléfono y correo por cotización. El integrador lee ese JSON directamente del SP o desde [`contactos_prueba.json`](mantra_integracion/contactos_prueba.json) para una simulación sin SQL Server. Pasó pruebas locales con llamadas HTTP simuladas. No se ha ejecutado en el servidor del cliente ni se han enviado contactos reales a Mantra.
 
-Faltan la regla definitiva de selección, equivalencias de códigos, `groupId`, `apiKey` y una prueba de extremo a extremo con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP conserva las 23 columnas de la muestra y `config.example.json` prioriza diez.
+Faltan la regla definitiva de selección, equivalencias de códigos, `groupId`, `apiKey` y una prueba de extremo a extremo con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP selecciona esos diez en su JSON.
 
 Los archivos fuente con datos de clientes, backup, credenciales y logs operativos no se versionan.

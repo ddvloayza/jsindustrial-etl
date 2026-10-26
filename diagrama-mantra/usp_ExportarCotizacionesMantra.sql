@@ -1,9 +1,10 @@
 /*
-  Exportación de las 23 columnas de "Cotizaciones Generales Prueba.xlsx".
+  Exportación de contactos basada en "Cotizaciones Generales Prueba.xlsx".
   Fuente disponible: dbo.CotizacionesC del backup BD_MANTRA.bak.
-  Los campos sin origen verificado se devuelven NULL; los que requieren
-  catálogos externos devuelven su código/ID provisional (ver mapeo.md).
-  Este SP devuelve un arreglo JSON con una entrada por cotización seleccionada.
+  Los campos que requieren catálogos externos devuelven su código/ID
+  provisional (ver mapeo.md).
+  Este SP devuelve un arreglo JSON con los 10 campos personalizados elegidos
+  más nombre, teléfono y correo para crear el contacto.
   La llamada HTTP a Mantra debe hacerla el integrador
   una vez confirmado el contrato del API y las equivalencias de catálogos.
 */
@@ -39,8 +40,6 @@ BEGIN
         CONVERT(varchar(20), c.ID_Canal_Origen) AS [Fuente de contacto],
         c.txtrefcot AS [Referencia],
         c.txtnomatt AS [Nombre del contacto],
-        CAST(NULL AS varchar(100)) AS [Cargo],
-        CAST(NULL AS varchar(100)) AS [Area],
         c.txttlf001 AS [Telefono],
         c.txtcorele AS [email],
         CASE LTRIM(RTRIM(c.codtipmon))
@@ -49,20 +48,7 @@ BEGIN
             ELSE LTRIM(RTRIM(c.codtipmon))
         END AS [Moneda],
         c.numtotdoc AS [Total Docum.],
-        CAST(CASE
-            WHEN LTRIM(RTRIM(c.codtipmon)) IN ('PEN', 'SOL', 'S/')
-                THEN c.numtotdoc
-            WHEN c.numtipcam > 0 AND c.numtotdoc IS NOT NULL
-                THEN ROUND(c.numtotdoc * c.numtipcam, 2)
-            ELSE NULL END AS numeric(20,2)) AS [Total M.N.],
-        CAST(NULL AS numeric(20,2)) AS [Invent. Disponible],
-        CAST(NULL AS numeric(7,2)) AS [% Invent. Dispon.],
-        c.tasa_exito_cierre AS [tasa_exito_cierre],
-        CAST(NULL AS date) AS [fec_Estim_Cierre],
-        COALESCE(CONVERT(varchar(20), c.ID_Status_Oferta), '-Ninguno-') AS [Status_Oferta],
-        CASE WHEN c.numpedgen = 1 THEN 'SI' ELSE '-' END AS [Generó O/V],
-        c.txtobsadi AS [Comentario],
-        CONVERT(varchar(20), c.codidtusr) AS [Usuario]
+        COALESCE(CONVERT(varchar(20), c.ID_Status_Oferta), '-Ninguno-') AS [Status_Oferta]
     INTO #CotizacionesMantra
     FROM dbo.CotizacionesC AS c
     CROSS APPLY (VALUES (
@@ -84,22 +70,12 @@ BEGIN
                 [Vendedor] AS vendedor,
                 [Fuente de contacto] AS fuente_contacto,
                 [Referencia] AS referencia,
-                [Nombre del contacto] AS nombre_contacto,
-                [Cargo] AS cargo,
-                [Area] AS area,
-                [Telefono] AS telefono,
-                [email] AS email,
                 [Moneda] AS moneda,
                 [Total Docum.] AS total_documento,
-                [Total M.N.] AS total_moneda_nacional,
-                [Invent. Disponible] AS inventario_disponible,
-                [% Invent. Dispon.] AS porcentaje_inventario_disponible,
-                [tasa_exito_cierre] AS tasa_exito_cierre,
-                [fec_Estim_Cierre] AS fecha_estimada_cierre,
                 [Status_Oferta] AS estado_oferta,
-                [Generó O/V] AS genero_orden_venta,
-                [Comentario] AS comentario,
-                [Usuario] AS usuario
+                [Nombre del contacto] AS nombre_contacto,
+                [Telefono] AS telefono,
+                [email] AS email
             FROM #CotizacionesMantra
             ORDER BY [Fecha], [N° Cotización]
             FOR JSON PATH, INCLUDE_NULL_VALUES
@@ -113,4 +89,4 @@ GO
 -- Ejemplos:
 -- EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde='2026-02-02', @FechaHasta='2026-02-02';
 -- EXEC dbo.usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO';
--- Para ver las columnas como tabla: EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;
+-- Para ver los mismos campos como tabla: EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;
