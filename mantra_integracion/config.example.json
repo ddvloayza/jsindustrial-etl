@@ -16,6 +16,16 @@
     "custom_7": "referencia",
     "custom_8": "moneda",
     "custom_9": "total_documento",
-    "custom_10": "estado_oferta"
+    "custom_10": "estado_oferta",
+    "custom_11": "total_moneda_nacional",
+    "custom_12": "tasa_exito_cierre",
+    "custom_13": "genero_orden_venta",
+    "custom_14": "comentario",
+    "custom_15": "usuario",
+    "custom_16": "cargo",
+    "custom_17": "area",
+    "custom_18": "inventario_disponible",
+    "custom_19": "porcentaje_inventario_disponible",
+    "custom_20": "fecha_estimada_cierre"
   }
 }

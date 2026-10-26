@@ -1,7 +1,7 @@
 """Crea o actualiza contactos de SQL Server en Mantra. No envía mensajes.
 
-El SP entrega un arreglo JSON con los 10 campos seleccionados y los datos de contacto.
-El API guarda al menos custom_1 a custom_20; esta integración usa los primeros 10.
+El SP entrega un arreglo JSON con 20 campos personalizados y los datos de contacto.
+El API guarda custom_1 a custom_20; nombre, teléfono y correo van aparte.
 """
 
 from __future__ import annotations
@@ -26,18 +26,21 @@ BASE_URL = "https://wbpback.mantra.chat"
 ALL_JSON_FIELDS = [
     "numero_cotizacion", "fecha", "cliente", "condicion_venta", "vendedor",
     "fuente_contacto", "referencia", "moneda", "total_documento",
-    "estado_oferta", "nombre_contacto", "telefono", "email",
+    "estado_oferta", "total_moneda_nacional", "tasa_exito_cierre",
+    "genero_orden_venta", "comentario", "usuario", "cargo", "area",
+    "inventario_disponible", "porcentaje_inventario_disponible",
+    "fecha_estimada_cierre", "nombre_contacto", "telefono", "email",
 ]
 
 
 def load_config(path: Path) -> dict:
     config = json.loads(path.read_text(encoding="utf-8"))
     custom = config.get("custom_fields", {})
-    if not isinstance(custom, dict) or len(custom) > 10:
-        raise ValueError("custom_fields debe contener como máximo 10 entradas")
-    allowed = {f"custom_{i}" for i in range(1, 11)}
+    if not isinstance(custom, dict) or len(custom) > 20:
+        raise ValueError("custom_fields debe contener como máximo 20 entradas")
+    allowed = {f"custom_{i}" for i in range(1, 21)}
     if set(custom) - allowed:
-        raise ValueError("Solo se permiten custom_1 a custom_10")
+        raise ValueError("Solo se permiten custom_1 a custom_20")
     missing = set(custom.values()) - set(ALL_JSON_FIELDS)
     if missing:
         raise ValueError(f"Propiedades JSON del SP no reconocidas: {sorted(missing)}")

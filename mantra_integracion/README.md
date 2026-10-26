@@ -7,12 +7,37 @@ La imagen refleja la propuesta original. **El alcance actual termina en crear o 
 ## Flujo implementado
 
 1. El Programador de tareas de Windows ejecuta `run_mantra.ps1` una vez al día.
-2. Python llama `dbo.usp_ExportarCotizacionesMantra` para la fecha anterior (zona horaria de Lima). El SP devuelve una fila `payload_json` con un arreglo de cotizaciones; Python lee y valida los diez campos elegidos y los tres datos de contacto de cada elemento.
+2. Python llama `dbo.usp_ExportarCotizacionesMantra` para la fecha anterior (zona horaria de Lima). El SP devuelve una fila `payload_json` con un arreglo de cotizaciones; Python lee y valida los veinte campos personalizados y los tres datos de contacto de cada elemento.
 3. Valida nombre y teléfono. Para Perú acepta nueve dígitos que empiecen en 9, con o sin prefijo 51, y envía `countryCode="51"` separado del teléfono.
-4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta diez `custom_*`.
+4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta veinte `custom_*`.
 5. Escribe un TXT diario `mantra_AAAAMMDD.txt` con registros JSON por línea: hora, identificador de cotización, etapa, HTTP y resultado. No incluye credenciales ni teléfono/correo. Si se vuelve a procesar un contacto, Mantra lo actualiza por número telefónico.
 
-El PDF entregado documenta nombre, teléfono, correo y diez campos `custom_1` a `custom_10`. La interfaz muestra 20 campos, y una prueba real confirmó que el API guarda `custom_11` y `custom_20`. La integración actual conserva los diez campos elegidos (`numero_cotizacion`, `fecha`, `cliente`, `condicion_venta`, `vendedor`, `fuente_contacto`, `referencia`, `moneda`, `total_documento`, `estado_oferta`) más `nombre_contacto`, `telefono` y `email`. El archivo `config.json` indica a qué `custom_*` corresponde cada uno de los diez. Si se amplía o cambia la selección, hay que actualizar el SP, la configuración y la validación del script. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto del JSON representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
+El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 campos, y una prueba real confirmó que el API guarda `custom_11` y `custom_20`. El JSON incluye los veinte campos personalizados de la tabla siguiente, más `nombre_contacto`, `telefono` y `email`. Estos últimos se envían como `data.name`, `data.phone` y `data.email`; por tanto, **ninguna de las 23 columnas del Excel queda fuera del envío por falta de espacio**. `countryCode` se añade desde la configuración.
+
+| Posición Mantra | Propiedad JSON | Columna del Excel |
+| --- | --- | --- |
+| `custom_1` | `numero_cotizacion` | N° Cotización |
+| `custom_2` | `fecha` | Fecha |
+| `custom_3` | `cliente` | Cliente |
+| `custom_4` | `condicion_venta` | Condicion de venta |
+| `custom_5` | `vendedor` | Vendedor |
+| `custom_6` | `fuente_contacto` | Fuente de contacto |
+| `custom_7` | `referencia` | Referencia |
+| `custom_8` | `moneda` | Moneda |
+| `custom_9` | `total_documento` | Total Docum. |
+| `custom_10` | `estado_oferta` | Status_Oferta |
+| `custom_11` | `total_moneda_nacional` | Total M.N. |
+| `custom_12` | `tasa_exito_cierre` | tasa_exito_cierre |
+| `custom_13` | `genero_orden_venta` | Generó O/V |
+| `custom_14` | `comentario` | Comentario |
+| `custom_15` | `usuario` | Usuario |
+| `custom_16` | `cargo` | Cargo |
+| `custom_17` | `area` | Area |
+| `custom_18` | `inventario_disponible` | Invent. Disponible |
+| `custom_19` | `porcentaje_inventario_disponible` | % Invent. Dispon. |
+| `custom_20` | `fecha_estimada_cierre` | fec_Estim_Cierre |
+
+**Sin valor verificable en el backup:** Cargo, Area, Invent. Disponible, % Invent. Dispon. y fec_Estim_Cierre. El SP los incluye como `null` en el JSON y Python no envía esos `custom_*` hasta que se defina su origen. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
 
 ## Probar con el JSON ficticio
 
@@ -63,7 +88,7 @@ El paso 2 escribe en Mantra, pero no envía ningún WhatsApp.
 ## Definiciones pendientes antes de producción
 
 - Confirmar la regla de selección diaria. La implementación actual selecciona `fecemidoc` del día anterior; la propuesta deja esta regla por acordar. Puede haber cotizaciones sin `fecemidoc` o modificaciones posteriores que la regla no capture.
-- Confirmar qué representan los diez `custom_*` elegidos para el contacto.
+- Confirmar el mapeo de los veinte `custom_*` y si Mantra permite cambiar sus etiquetas visibles.
 - Validar con una fila real el número de cotización calculado, la moneda y el total del documento.
 - Confirmar que `txttlf001` contiene teléfonos correctos de clientes. No se exportan registros con teléfono inválido.
 - Definir equivalencias de los códigos de vendedor, condición de venta, fuente y estado si Mantra necesita sus descripciones.

@@ -11,8 +11,18 @@
     "telefono": "987654321",
     "email": "ana@example.com",
     "moneda": "S/",
-    "total_documento": 1250.50,
-    "estado_oferta": "ABIERTA"
+    "total_documento": 1250.5,
+    "estado_oferta": "ABIERTA",
+    "total_moneda_nacional": 1250.5,
+    "tasa_exito_cierre": 80,
+    "genero_orden_venta": "SI",
+    "comentario": "Registro ficticio A",
+    "usuario": "USUARIO_DEMO",
+    "cargo": null,
+    "area": null,
+    "inventario_disponible": null,
+    "porcentaje_inventario_disponible": null,
+    "fecha_estimada_cierre": null
   },
   {
     "numero_cotizacion": "PRUEBA-0002",
@@ -26,8 +36,18 @@
     "telefono": "+51 912 345 678",
     "email": "luis@example.com",
     "moneda": "US$",
-    "total_documento": 300.00,
-    "estado_oferta": "PENDIENTE"
+    "total_documento": 300.0,
+    "estado_oferta": "PENDIENTE",
+    "total_moneda_nacional": 1125.0,
+    "tasa_exito_cierre": 50,
+    "genero_orden_venta": "-",
+    "comentario": "Registro ficticio B",
+    "usuario": "USUARIO_DEMO",
+    "cargo": null,
+    "area": null,
+    "inventario_disponible": null,
+    "porcentaje_inventario_disponible": null,
+    "fecha_estimada_cierre": null
   },
   {
     "numero_cotizacion": "PRUEBA-0003",
@@ -41,7 +61,17 @@
     "telefono": "923456789",
     "email": "marta@example.com",
     "moneda": "S/",
-    "total_documento": 875.00,
-    "estado_oferta": "ABIERTA"
+    "total_documento": 875.0,
+    "estado_oferta": "ABIERTA",
+    "total_moneda_nacional": 875.0,
+    "tasa_exito_cierre": 70,
+    "genero_orden_venta": "-",
+    "comentario": "Registro ficticio C",
+    "usuario": "USUARIO_DEMO",
+    "cargo": null,
+    "area": null,
+    "inventario_disponible": null,
+    "porcentaje_inventario_disponible": null,
+    "fecha_estimada_cierre": null
   }
 ]
