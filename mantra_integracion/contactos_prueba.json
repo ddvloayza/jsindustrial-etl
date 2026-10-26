@@ -28,5 +28,20 @@
     "moneda": "US$",
     "total_documento": 300.00,
     "estado_oferta": "PENDIENTE"
+  },
+  {
+    "numero_cotizacion": "PRUEBA-0003",
+    "fecha": "2026-02-02",
+    "cliente": "EMPRESA DEMO TRES SAC",
+    "condicion_venta": "CONTADO",
+    "vendedor": "VEN003",
+    "fuente_contacto": "3",
+    "referencia": "Cotización de prueba C",
+    "nombre_contacto": "MARTA EJEMPLO",
+    "telefono": "923456789",
+    "email": "marta@example.com",
+    "moneda": "S/",
+    "total_documento": 875.00,
+    "estado_oferta": "ABIERTA"
   }
 ]

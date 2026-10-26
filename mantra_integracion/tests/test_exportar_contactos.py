@@ -80,7 +80,7 @@ class ContactExportTests(unittest.TestCase):
             self.config["log_dir"] = temporary
             with patch.object(app, "fetch_rows") as db, patch.object(app, "post") as request:
                 summary = app.run(self.config, date(2026, 2, 2), False, ROOT / "contactos_prueba.json")
-            self.assertEqual(summary["seleccionados"], 2)
+            self.assertEqual(summary["seleccionados"], 3)
             self.assertEqual(summary["errores"], 0)
             db.assert_not_called()
             request.assert_not_called()
