@@ -24,6 +24,16 @@ La documentación del API solo ofrece nombre, teléfono, correo y diez campos `c
 6. Tras confirmar el mapeo, regla y plantilla, ejecutar una prueba autorizada con `--send` y una fecha que seleccione un lead de prueba. Revisar respuesta 200/201 de contacto y 201 de plantilla en el TXT.
 7. Registrar el horario acordado: `powershell -File .\registrar_tarea.ps1 -Hora "07:00"`. La tarea ejecuta la fecha anterior por defecto.
 
+## Prueba de acceso a Mantra sin SQL Server
+
+Configura `MANTRA_GROUP_ID` y `MANTRA_API_KEY` en el entorno de la cuenta que ejecuta Python. Usa un número de prueba autorizado; el script nunca imprime los secretos ni el contenido del contacto consultado.
+
+1. Solo lectura, valida las credenciales sin modificar contactos: `python probar_mantra.py --phone 987654321`. Un HTTP 200 o 404 indica que Mantra aceptó las credenciales para `/contacts/byphone`.
+2. Crear o actualizar el contacto de prueba: `python probar_mantra.py --phone 987654321 --name "Prueba JS Industrial"`.
+3. Enviar una plantilla real al número de prueba: configurar también `MANTRA_TEMPLATE_ID` y ejecutar `python probar_mantra.py --phone 987654321 --name "Prueba JS Industrial" --send-template`.
+
+Los pasos 2 y 3 escriben en Mantra. El paso 3 puede enviar un WhatsApp real y no reintenta automáticamente si la respuesta es incierta.
+
 ## Definiciones pendientes antes de producción
 
 - Confirmar la regla de selección diaria. La implementación actual selecciona `fecemidoc` del día anterior; la propuesta deja esta regla por acordar. Puede haber cotizaciones sin `fecemidoc` o modificaciones posteriores que la regla no capture.
