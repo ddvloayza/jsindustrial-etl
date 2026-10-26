@@ -1,12 +1,12 @@
 # JS Industrial → Mantra ETL
 
-Piloto para seleccionar cotizaciones en SQL Server, crear o actualizar sus contactos en Mantra y enviar una plantilla aprobada. Incluye el esquema extraído del backup, el procedimiento almacenado y el integrador Python.
+Piloto para seleccionar cotizaciones en SQL Server y crear o actualizar sus contactos en Mantra. Incluye el esquema extraído del backup, el procedimiento almacenado y el integrador Python. **Este alcance no envía mensajes ni plantillas.**
 
 ## Flujo técnico
 
 ![Flujo técnico de la propuesta: tarea programada, SQL Server, script Python, Mantra API y archivo TXT diario](docs/flujo-mantra.png)
 
-Imagen extraída de la página 2 de la propuesta. La hora de las 5:00 p. m. que aparece en ella es ilustrativa; el horario real se define al registrar la tarea.
+Imagen original extraída de la página 2 de la propuesta. Allí figura un envío de plantilla, que quedó fuera del alcance actual; la implementación termina al crear o actualizar el contacto. La hora de las 5:00 p. m. es ilustrativa.
 
 ## Carpetas
 
@@ -17,6 +17,6 @@ Imagen extraída de la página 2 de la propuesta. La hora de las 5:00 p. m. que 
 
 El SP se compiló contra una restauración temporal del backup y se probó con una fila que luego se revirtió. El integrador pasó pruebas locales con llamadas HTTP simuladas. No se ha ejecutado en el servidor del cliente ni se han enviado contactos reales a Mantra.
 
-Faltan la regla definitiva de selección, equivalencias de códigos, `templateId`, plantilla aprobada, credenciales y una prueba de extremo a extremo con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP conserva las 23 columnas de la muestra y `config.example.json` prioriza diez.
+Faltan la regla definitiva de selección, equivalencias de códigos, `groupId`, `apiKey` y una prueba de extremo a extremo con datos autorizados. El API documentado solo admite diez campos personalizados por contacto; el SP conserva las 23 columnas de la muestra y `config.example.json` prioriza diez.
 
 Los archivos fuente con datos de clientes, backup, credenciales y logs operativos no se versionan.

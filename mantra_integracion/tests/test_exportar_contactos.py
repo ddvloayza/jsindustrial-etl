@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from datetime import date
@@ -35,47 +34,29 @@ class ContactExportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Teléfono inválido"):
             app.build_contact(self.row, self.config)
 
-    def test_contact_then_template_and_deduplicate(self):
+    def test_upsert_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
             contact_response = Mock(status_code=201)
             contact_response.json.return_value = {"resultOp": "created"}
-            template_response = Mock(status_code=201)
-            template_response.json.return_value = {"ok": True}
             with patch.dict(app.os.environ, {
                 "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key",
-                "MANTRA_TEMPLATE_ID": "test-template",
             }), patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(
-                app, "post", side_effect=[contact_response, template_response]
+                app, "post", return_value=contact_response
             ) as request:
-                summary = app.run(self.config, date(2026, 2, 2), send=True)
+                summary = app.run(self.config, date(2026, 2, 2), apply_changes=True)
             self.assertEqual(summary["contactos_ok"], 1)
-            self.assertEqual(summary["plantillas_ok"], 1)
-            self.assertEqual([c.args[1] for c in request.call_args_list], ["/contacts/new", "/contacts/send"])
+            self.assertEqual([c.args[1] for c in request.call_args_list], ["/contacts/new"])
             self.assertEqual(request.call_args_list[0].args[2]["data"]["phone"], "987549210")
-            self.assertEqual(request.call_args_list[1].args[2]["phone"], "987549210")
-            self.assertIn("0001-0027924-1", app.already_sent(Path(temporary)))
-            with patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(app, "post") as second_request:
-                summary = app.run(self.config, date(2026, 2, 2), send=False)
-            self.assertEqual(summary["omitidos"], 1)
-            second_request.assert_not_called()
+            self.assertIn("contacto", next(Path(temporary).glob("mantra_*.txt")).read_text())
 
-    def test_uncertain_template_response_blocks_resend(self):
+    def test_dry_run_does_not_call_api(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
-            contact_response = Mock(status_code=201)
-            contact_response.json.return_value = {"resultOp": "created"}
-            template_response = Mock(status_code=500)
-            template_response.json.return_value = {"message": "Error interno"}
-            with patch.dict(app.os.environ, {
-                "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key",
-                "MANTRA_TEMPLATE_ID": "test-template",
-            }), patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(
-                app, "post", side_effect=[contact_response, template_response]
-            ):
-                summary = app.run(self.config, date(2026, 2, 2), send=True)
-            self.assertEqual(summary["errores"], 1)
-            self.assertIn("0001-0027924-1", app.already_sent(Path(temporary)))
+            with patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(app, "post") as request:
+                summary = app.run(self.config, date(2026, 2, 2), apply_changes=False)
+            self.assertEqual(summary["errores"], 0)
+            request.assert_not_called()
 
 
 if __name__ == "__main__":

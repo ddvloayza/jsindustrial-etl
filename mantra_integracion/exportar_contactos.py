@@ -1,4 +1,4 @@
-"""Exporta contactos de SQL Server a Mantra y, opcionalmente, envía una plantilla.
+"""Crea o actualiza contactos de SQL Server en Mantra. No envía mensajes.
 
 El SP conserva las 23 columnas originales. La API documentada admite name,
 phone, countryCode, email y 10 campos custom; su selección vive en config.json.
@@ -125,19 +125,6 @@ def append_log(log_dir: Path, lead_id: str, stage: str, status: str, http: int |
         stream.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def already_sent(log_dir: Path) -> set[str]:
-    sent = set()
-    for path in log_dir.glob("mantra_*.txt"):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if record.get("etapa") == "plantilla" and record.get("resultado") in ("ENVIADO", "INCIERTO"):
-                sent.add(str(record.get("lead")))
-    return sent
-
-
 def post(session: requests.Session, path: str, payload: dict, retry_upsert: bool) -> requests.Response:
     attempts = 3 if retry_upsert else 1
     for attempt in range(attempts):
@@ -165,30 +152,24 @@ def response_detail(response: requests.Response) -> str:
     return "Respuesta sin detalle estructurado"
 
 
-def run(config: dict, run_date: date, send: bool, contacts_only: bool = False) -> dict:
+def run(config: dict, run_date: date, apply_changes: bool) -> dict:
     rows = fetch_rows(config, run_date)
     log_dir = Path(config["log_dir"])
-    sent = already_sent(log_dir)
-    summary = {"seleccionados": len(rows), "contactos_ok": 0, "plantillas_ok": 0, "omitidos": 0, "errores": 0}
+    summary = {"seleccionados": len(rows), "contactos_ok": 0, "errores": 0}
     group_id = os.getenv("MANTRA_GROUP_ID")
     api_key = os.getenv("MANTRA_API_KEY")
-    template_id = os.getenv("MANTRA_TEMPLATE_ID")
-    if send and (not group_id or not api_key or (not contacts_only and not template_id)):
-        raise ValueError("Faltan MANTRA_GROUP_ID, MANTRA_API_KEY o MANTRA_TEMPLATE_ID")
+    if apply_changes and (not group_id or not api_key):
+        raise ValueError("Faltan MANTRA_GROUP_ID o MANTRA_API_KEY")
     session = requests.Session()
     for row in rows:
         lead_id = value_as_text(row.get("N° Cotización")) or "SIN_ID"
-        if not contacts_only and lead_id in sent:
-            summary["omitidos"] += 1
-            append_log(log_dir, lead_id, "seleccion", "OMITIDO", detail="Plantilla enviada o estado incierto según TXT previo")
-            continue
         try:
-            phone, data = build_contact(row, config)
+            _, data = build_contact(row, config)
         except ValueError as exc:
             summary["errores"] += 1
             append_log(log_dir, lead_id, "validacion", "ERROR", detail=str(exc))
             continue
-        if not send:
+        if not apply_changes:
             append_log(log_dir, lead_id, "contacto", "DRY_RUN", detail="Contacto validado; no se llamó al API")
             continue
         credentials = {"groupId": group_id, "apiKey": api_key}
@@ -206,27 +187,6 @@ def run(config: dict, run_date: date, send: bool, contacts_only: bool = False) -
             continue
         summary["contactos_ok"] += 1
         append_log(log_dir, lead_id, "contacto", "OK", contact_response.status_code, response_detail(contact_response))
-        if contacts_only:
-            continue
-        try:
-            send_response = post(session, "/contacts/send", {
-                **credentials, "templateId": template_id,
-                "phone": phone, "countryCode": data["countryCode"],
-            }, retry_upsert=False)
-        except requests.RequestException as exc:
-            summary["errores"] += 1
-            append_log(log_dir, lead_id, "plantilla", "INCIERTO", detail=f"Red: {type(exc).__name__}; verificar en Mantra antes de reintentar")
-            continue
-        if send_response.status_code == 201:
-            summary["plantillas_ok"] += 1
-            sent.add(lead_id)
-            append_log(log_dir, lead_id, "plantilla", "ENVIADO", 201, response_detail(send_response))
-        else:
-            summary["errores"] += 1
-            uncertain = send_response.status_code >= 500
-            append_log(log_dir, lead_id, "plantilla", "INCIERTO" if uncertain else "ERROR", send_response.status_code, response_detail(send_response))
-            if send_response.status_code == 403:
-                break
     session.close()
     return summary
 
@@ -235,13 +195,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Exporta contactos de SQL Server a Mantra")
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--fecha", type=date.fromisoformat, help="Fecha a procesar, AAAA-MM-DD; por defecto ayer en Lima")
-    parser.add_argument("--send", action="store_true", help="Habilita llamadas reales al API")
-    parser.add_argument("--contacts-only", action="store_true", help="Crea/actualiza contactos sin enviar plantilla")
+    parser.add_argument("--apply", action="store_true", help="Crea/actualiza contactos reales en Mantra")
     args = parser.parse_args()
     config = load_config(args.config)
     run_date = args.fecha or (datetime.now(ZoneInfo("America/Lima")).date() - timedelta(days=1))
-    summary = run(config, run_date, args.send, args.contacts_only)
-    print(json.dumps({"fecha": run_date.isoformat(), "modo": "ENVIO" if args.send else "DRY_RUN", **summary}, ensure_ascii=False))
+    summary = run(config, run_date, args.apply)
+    print(json.dumps({"fecha": run_date.isoformat(), "modo": "APLICAR" if args.apply else "DRY_RUN", **summary}, ensure_ascii=False))
     return 1 if summary["errores"] else 0
 
 

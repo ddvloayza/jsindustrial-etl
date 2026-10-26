@@ -28,6 +28,17 @@ class CredentialProbeTests(unittest.TestCase):
             self.assertEqual(post.call_args.args[1], "/contacts/byphone")
             self.assertIn("Credenciales aceptadas", stdout.getvalue())
 
+    def test_upsert_uses_only_contacts_new(self):
+        response = Mock(status_code=201)
+        with patch.dict(probar_mantra.os.environ, {
+            "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"
+        }), patch.object(sys, "argv", ["probar_mantra.py", "--phone", "987654321", "--name", "Prueba"]), patch.object(
+            probar_mantra, "post", return_value=response
+        ) as post, patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(probar_mantra.main(), 0)
+            self.assertEqual(post.call_count, 1)
+            self.assertEqual(post.call_args.args[1], "/contacts/new")
+
 
 if __name__ == "__main__":
     unittest.main()

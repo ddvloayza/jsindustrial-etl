@@ -1,4 +1,4 @@
-"""Prueba aislada de credenciales, contacto y plantilla Mantra sin SQL Server."""
+"""Prueba aislada de credenciales y creación de contacto Mantra sin SQL Server."""
 
 import argparse
 import os
@@ -14,12 +14,9 @@ def main() -> int:
     parser.add_argument("--phone", required=True, help="Número de prueba autorizado, con o sin prefijo de país")
     parser.add_argument("--country-code", default="51")
     parser.add_argument("--name", help="Nombre para crear o actualizar el contacto de prueba")
-    parser.add_argument("--send-template", action="store_true", help="Envía realmente la plantilla al número de prueba")
     args = parser.parse_args()
 
     required = ["MANTRA_GROUP_ID", "MANTRA_API_KEY"]
-    if args.send_template:
-        required.append("MANTRA_TEMPLATE_ID")
     missing = [name for name in required if not os.getenv(name)]
     if missing:
         print("Faltan variables: " + ", ".join(missing), file=sys.stderr)
@@ -31,7 +28,7 @@ def main() -> int:
     credentials = {"groupId": os.environ["MANTRA_GROUP_ID"], "apiKey": os.environ["MANTRA_API_KEY"]}
     session = requests.Session()
 
-    if not args.name and not args.send_template:
+    if not args.name:
         try:
             response = post(session, "/contacts/byphone", {
                 **credentials, "phone": phone, "countryCode": args.country_code,
@@ -45,9 +42,6 @@ def main() -> int:
         print(f"Verificación no concluyente o fallida: HTTP {response.status_code}; {response_detail(response)}", file=sys.stderr)
         return 1
 
-    if not args.name:
-        print("Para enviar plantilla debes indicar --name para crear/actualizar primero el contacto", file=sys.stderr)
-        return 2
     data = {"name": args.name.strip(), "phone": phone, "countryCode": args.country_code}
     try:
         response = post(session, "/contacts/new", {**credentials, "data": data}, retry_upsert=True)
@@ -58,21 +52,7 @@ def main() -> int:
         print(f"Contacto rechazado: HTTP {response.status_code}; {response_detail(response)}", file=sys.stderr)
         return 1
     print(f"Contacto de prueba creado/actualizado: HTTP {response.status_code}")
-    if not args.send_template:
-        return 0
-    try:
-        response = post(session, "/contacts/send", {
-            **credentials, "templateId": os.environ["MANTRA_TEMPLATE_ID"],
-            "phone": phone, "countryCode": args.country_code,
-        }, retry_upsert=False)
-    except requests.RequestException as exc:
-        print(f"Resultado de plantilla incierto ({type(exc).__name__}); verifica en Mantra antes de repetir", file=sys.stderr)
-        return 1
-    if response.status_code == 201:
-        print("Plantilla aceptada por Mantra: HTTP 201")
-        return 0
-    print(f"Plantilla no confirmada: HTTP {response.status_code}; {response_detail(response)}", file=sys.stderr)
-    return 1
+    return 0
 
 
 if __name__ == "__main__":
