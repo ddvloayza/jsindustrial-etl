@@ -15,7 +15,7 @@
     "estado_oferta": "ABIERTA",
     "total_moneda_nacional": 1250.5,
     "tasa_exito_cierre": 80,
-    "genero_orden_venta": "SI",
+    "genero_orden_venta": "-",
     "comentario": "Registro ficticio A",
     "usuario": "USUARIO_DEMO",
     "cargo": null,

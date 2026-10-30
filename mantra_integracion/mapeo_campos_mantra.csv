@@ -11,7 +11,7 @@ custom_9,total_documento,Total Docum.,numtotdoc,Directo
 custom_10,estado_oferta,Status_Oferta,ID_Status_Oferta,ID; falta catálogo descriptivo; sin ID sale -Ninguno-
 custom_11,total_moneda_nacional,Total M.N.,numtotdoc * numtipcam; o numtotdoc en soles,Cálculo pendiente de validar
 custom_12,tasa_exito_cierre,tasa_exito_cierre,tasa_exito_cierre,Directo
-custom_13,genero_orden_venta,Generó O/V,numpedgen,1 a SI; otros valores a -
+custom_13,genero_orden_venta,Generó O/V,numpedgen,Booleano: 1 significa cotización completada y se excluye; 0 se exporta como -
 custom_14,comentario,Comentario,txtobsadi,Equivalencia probable; pendiente de validar
 custom_15,usuario,Usuario,codidtusr,ID; falta catálogo descriptivo
 custom_16,cargo,Cargo,Sin origen verificado,NULL en JSON; omitido en API

@@ -28,7 +28,7 @@ El JSON distribuye veinte columnas entre `custom_1` y `custom_20` de Mantra. Las
 | tasa_exito_cierre | `tasa_exito_cierre` | Directo |
 | fec_Estim_Cierre | Sin campo equivalente | `NULL`; `Fec_Cierre_Exito` indica cierre exitoso y no se usó como fecha estimada |
 | Status_Oferta | `ID_Status_Oferta` | ID; falta catálogo para descripción. Sin ID, `-Ninguno-` como en el ejemplo |
-| Generó O/V | `numpedgen` | `1`→`SI`; otros valores→`-` |
+| Generó O/V (`genero_orden_venta`) | `numpedgen` (`bit`) | `1`: cotización completada, se excluye de Mantra; `0`: puede exportarse y aparece como `-` en `custom_13` |
 | Comentario | `txtobsadi` | Equivalencia probable; validar |
 | Usuario | `codidtusr` | ID; falta catálogo para nombre |
 

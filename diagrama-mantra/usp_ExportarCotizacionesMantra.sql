@@ -112,7 +112,9 @@ BEGIN
       AND (@Codidtcot IS NULL OR c.codidtcot = @Codidtcot)
       -- Más de dos días completos: el día D procesa fechas anteriores a D-2.
       AND c.fecemidoc < DATEADD(day, -2, @FechaProceso)
-      -- numpedgen es bit: 1 indica que ya se generó la orden de venta.
+      -- genero_orden_venta proviene de numpedgen (bit):
+      -- 1 = cotización completada con orden; no se envía a Mantra.
+      -- 0 = cotización sin orden; puede enviarse si cumple las otras reglas.
       AND c.numpedgen = 0
       AND tel.normalizado IS NOT NULL
       AND NOT EXISTS (

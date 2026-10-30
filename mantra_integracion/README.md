@@ -12,7 +12,7 @@ La imagen refleja la propuesta original. **El alcance actual termina en crear o 
 4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta veinte `custom_*`.
 5. Después de una respuesta HTTP 200/201, Python llama `dbo.usp_ConfirmarExportacionMantra` para registrar el teléfono como enviado. Escribe un TXT diario `mantra_AAAAMMDD.txt` con hora, identificador de cotización, etapa, HTTP y resultado; no incluye credenciales ni teléfono/correo. Un fallo del API o de validación no marca el teléfono y permite reintentar en la siguiente ejecución.
 
-`ID_Status_Oferta` es un entero y se exporta a `custom_10`; **no es el booleano de conversión a orden**. El booleano encontrado en el backup es `numpedgen`, que también alimenta `custom_13`. La regla excluye `numpedgen = 1`. La marca de exportación se guarda por teléfono peruano normalizado, no por número de cotización. Una vez enviado el contacto, nuevas cotizaciones del mismo teléfono no se vuelven a exportar automáticamente.
+`genero_orden_venta` proviene del booleano `numpedgen`: `true` (`1`) significa que la cotización se completó y generó orden de venta, por lo que **no se envía a Mantra**. Solo se consideran cotizaciones con `false` (`0`); en `custom_13` ese valor aparece como `-`, siguiendo el formato del Excel. `ID_Status_Oferta` es otro campo, de tipo entero, y se exporta a `custom_10`. La marca de exportación se guarda por teléfono peruano normalizado, no por número de cotización. Una vez enviado el contacto, nuevas cotizaciones del mismo teléfono no se vuelven a exportar automáticamente.
 
 El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 campos, y una prueba real confirmó que el API guarda `custom_11` y `custom_20`. El JSON incluye los veinte campos personalizados de la tabla siguiente, más `nombre_contacto`, `telefono` y `email`. Estos últimos se envían como `data.name`, `data.phone` y `data.email`; por tanto, las 23 columnas del Excel tienen una posición asignada en el JSON y en el mapeo del API. `countryCode` se añade desde la configuración. La [tabla CSV de mapeo](mapeo_campos_mantra.csv) agrega el origen SQL y el estado de cada campo y se puede abrir en Excel.
 
@@ -89,7 +89,7 @@ El paso 2 escribe en Mantra, pero no envía ningún WhatsApp.
 
 ## Definiciones pendientes antes de producción
 
-- Validar con el negocio que `numpedgen = 1` corresponde a la orden aprobada indicada. El esquema lo confirma como booleano de orden generada; el backup vacío no permite observar el evento de aprobación. Las cotizaciones sin `fecemidoc` no son seleccionables.
+- Las cotizaciones sin `fecemidoc` no son seleccionables.
 - Las ejecuciones simultáneas y una caída después de que Mantra acepte el contacto pero antes de confirmar en SQL pueden causar un reintento. Mantra actualiza el contacto por teléfono, pero la confirmación estricta entre API y SQL no es atómica.
 - Confirmar el mapeo de los veinte `custom_*` y si Mantra permite cambiar sus etiquetas visibles.
 - Validar con una fila real el número de cotización calculado, la moneda y el total del documento.
