@@ -12,7 +12,7 @@ La imagen refleja la propuesta original. **El alcance actual termina en crear o 
 4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta veinte `custom_*`.
 5. Escribe un TXT diario `mantra_AAAAMMDD.txt` con registros JSON por línea: hora, identificador de cotización, etapa, HTTP y resultado. No incluye credenciales ni teléfono/correo. Si se vuelve a procesar un contacto, Mantra lo actualiza por número telefónico.
 
-El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 campos, y una prueba real confirmó que el API guarda `custom_11` y `custom_20`. El JSON incluye los veinte campos personalizados de la tabla siguiente, más `nombre_contacto`, `telefono` y `email`. Estos últimos se envían como `data.name`, `data.phone` y `data.email`; por tanto, **ninguna de las 23 columnas del Excel queda fuera del envío por falta de espacio**. `countryCode` se añade desde la configuración.
+El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 campos, y una prueba real confirmó que el API guarda `custom_11` y `custom_20`. El JSON incluye los veinte campos personalizados de la tabla siguiente, más `nombre_contacto`, `telefono` y `email`. Estos últimos se envían como `data.name`, `data.phone` y `data.email`; por tanto, las 23 columnas del Excel tienen una posición asignada en el JSON y en el mapeo del API. `countryCode` se añade desde la configuración. La [tabla CSV de mapeo](mapeo_campos_mantra.csv) agrega el origen SQL y el estado de cada campo y se puede abrir en Excel.
 
 | Posición Mantra | Propiedad JSON | Columna del Excel |
 | --- | --- | --- |
@@ -37,7 +37,7 @@ El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 camp
 | `custom_19` | `porcentaje_inventario_disponible` | % Invent. Dispon. |
 | `custom_20` | `fecha_estimada_cierre` | fec_Estim_Cierre |
 
-**Sin valor verificable en el backup:** Cargo, Area, Invent. Disponible, % Invent. Dispon. y fec_Estim_Cierre. El SP los incluye como `null` en el JSON y Python no envía esos `custom_*` hasta que se defina su origen. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
+**Sin valor verificable en el backup:** Cargo, Area, Invent. Disponible, % Invent. Dispon. y fec_Estim_Cierre. El SP los incluye como `null` en el JSON y Python no envía esos `custom_*` hasta que se defina su origen. Por ahora se envían como máximo 15 campos personalizados con valor, más nombre, teléfono y correo cuando corresponda. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
 
 ## Probar con el JSON ficticio
 
@@ -68,7 +68,7 @@ Con `--json-file` solo completa las dos variables de Mantra. El servidor y la ba
 
 1. Instalar Python 3.10+ y `pip install -r requirements.txt`.
 2. Ejecutar el SQL de `../diagrama-mantra/usp_ExportarCotizacionesMantra.sql` en la base real.
-3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. El usuario que ejecute la tarea necesita lectura de `dbo.CotizacionesC` y permiso `EXECUTE` sobre el SP.
+3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. `config.json` todavía no está creado en esta copia del proyecto. El usuario que ejecute la tarea necesita lectura de `dbo.CotizacionesC` y permiso `EXECUTE` sobre el SP.
 4. Completar las cuatro variables de `.env` para la cuenta que ejecutará la tarea. No guardar secretos en `config.json`, el repositorio o el TXT.
 5. Probar una fecha sin modificar Mantra: `python exportar_contactos.py --config config.json --fecha 2026-02-02`. Revisar el TXT y el conteo.
 6. Tras confirmar el mapeo y la regla, ejecutar una prueba autorizada con `python exportar_contactos.py --config config.json --fecha 2026-02-02 --apply`. Revisar la respuesta 200/201 del contacto en el TXT.

@@ -1,0 +1,24 @@
+campo_mantra,propiedad_json,columna_excel,origen_sql,estado
+custom_1,numero_cotizacion,N° Cotización,txtserdoc + txtnrodoc + txtnrorev; respaldo codidtcot,Calculado; formato pendiente de validar
+custom_2,fecha,Fecha,fecemidoc,Directo
+custom_3,cliente,Cliente,txtrazsoc,Directo
+custom_4,condicion_venta,Condicion de venta,codfmapag,Código; falta catálogo descriptivo
+custom_5,vendedor,Vendedor,codmtrven,Código; falta catálogo descriptivo
+custom_6,fuente_contacto,Fuente de contacto,ID_Canal_Origen,ID; falta catálogo descriptivo
+custom_7,referencia,Referencia,txtrefcot,Directo
+custom_8,moneda,Moneda,codtipmon,USD/DOL a US$; PEN/SOL a S/; otros códigos sin transformar
+custom_9,total_documento,Total Docum.,numtotdoc,Directo
+custom_10,estado_oferta,Status_Oferta,ID_Status_Oferta,ID; falta catálogo descriptivo; sin ID sale -Ninguno-
+custom_11,total_moneda_nacional,Total M.N.,numtotdoc * numtipcam; o numtotdoc en soles,Cálculo pendiente de validar
+custom_12,tasa_exito_cierre,tasa_exito_cierre,tasa_exito_cierre,Directo
+custom_13,genero_orden_venta,Generó O/V,numpedgen,1 a SI; otros valores a -
+custom_14,comentario,Comentario,txtobsadi,Equivalencia probable; pendiente de validar
+custom_15,usuario,Usuario,codidtusr,ID; falta catálogo descriptivo
+custom_16,cargo,Cargo,Sin origen verificado,NULL en JSON; omitido en API
+custom_17,area,Area,Sin origen verificado,NULL en JSON; omitido en API
+custom_18,inventario_disponible,Invent. Disponible,Sin origen verificado,NULL en JSON; omitido en API
+custom_19,porcentaje_inventario_disponible,% Invent. Dispon.,Sin origen verificado,NULL en JSON; omitido en API
+custom_20,fecha_estimada_cierre,fec_Estim_Cierre,Sin origen verificado,NULL en JSON; omitido en API
+data.name,nombre_contacto,Nombre del contacto,txtnomatt,Si está vacío usa cliente; obligatorio para envío
+data.phone,telefono,Telefono,txttlf001,Obligatorio; se valida como celular peruano
+data.email,email,email,txtcorele,Opcional; se envía si contiene @
