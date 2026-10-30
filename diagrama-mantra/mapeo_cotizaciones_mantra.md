@@ -39,4 +39,4 @@ El JSON distribuye veinte columnas entre `custom_1` y `custom_20` de Mantra. Las
 3. Verificar con una cotización real la composición de `N° Cotización`, la moneda, `Total M.N.` y `Comentario`.
 4. Mantener la API key y el group ID en el integrador, fuera del procedimiento y del repositorio.
 
-Uso: `EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde='2026-02-02', @FechaHasta='2026-02-02', @ComoJson=1;` devuelve un arreglo JSON en `payload_json`.
+Uso: `EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05', @ComoJson=1;` devuelve los contactos pendientes en `payload_json` y sus identificadores en `ids_json`. La fecha de ejemplo selecciona cotizaciones anteriores al 3 de febrero, sin orden de venta generada (`numpedgen = 0`) y cuyos teléfonos todavía no constan en `dbo.MantraExportaciones`. Después de cada respuesta HTTP 200/201, el integrador confirma el teléfono mediante `dbo.usp_ConfirmarExportacionMantra`.

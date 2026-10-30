@@ -3,24 +3,59 @@
   Fuente disponible: dbo.CotizacionesC del backup BD_MANTRA.bak.
   Los campos que requieren catálogos externos devuelven su código/ID
   provisional (ver mapeo_cotizaciones_mantra.md).
-  Este SP devuelve un arreglo JSON con 20 campos personalizados elegidos
-  más nombre, teléfono y correo para crear el contacto.
-  La llamada HTTP a Mantra debe hacerla el integrador
-  una vez confirmado el contrato del API y las equivalencias de catálogos.
+  Selecciona contactos con una cotización de más de dos días completos,
+  sin orden de venta generada y sin envío exitoso registrado para el teléfono.
+  El integrador confirma cada éxito mediante usp_ConfirmarExportacionMantra.
 */
+IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MantraExportaciones (
+        telefono char(9) NOT NULL PRIMARY KEY,
+        codidtcot char(10) NOT NULL,
+        fecha_envio datetime2(0) NOT NULL
+            CONSTRAINT DF_MantraExportaciones_fecha_envio DEFAULT SYSDATETIME(),
+        http_status smallint NOT NULL
+    );
+END;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_NormalizarTelefonoMantra(@Texto varchar(20))
+RETURNS varchar(9)
+AS
+BEGIN
+    DECLARE @Digitos varchar(20) = ISNULL(@Texto, '');
+    WHILE PATINDEX('%[^0-9]%', @Digitos) > 0
+        SET @Digitos = STUFF(@Digitos, PATINDEX('%[^0-9]%', @Digitos), 1, '');
+    IF LEN(@Digitos) = 11 AND LEFT(@Digitos, 2) = '51'
+        SET @Digitos = RIGHT(@Digitos, 9);
+    IF LEN(@Digitos) = 9 AND LEFT(@Digitos, 1) = '9'
+        RETURN @Digitos;
+    RETURN NULL;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.usp_ExportarCotizacionesMantra
     @FechaDesde date = NULL,
     @FechaHasta date = NULL,
     @Codidtcot char(10) = NULL,
-    @ComoJson bit = 1
+    @ComoJson bit = 1,
+    @FechaProceso date = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    SET @FechaProceso = COALESCE(@FechaProceso, CONVERT(date, SYSDATETIME()));
 
     IF @FechaDesde IS NOT NULL AND @FechaHasta IS NOT NULL AND @FechaDesde > @FechaHasta
         THROW 50001, 'FechaDesde no puede ser mayor que FechaHasta.', 1;
 
     SELECT
+        c.codidtcot AS id_interno,
+        tel.normalizado AS telefono_normalizado,
+        ROW_NUMBER() OVER (
+            PARTITION BY tel.normalizado
+            ORDER BY c.fecemidoc DESC, c.codidtcot DESC
+        ) AS fila_telefono,
         -- Campo calculado para la salida; NO existe una columna numero_cotizacion.
         -- Confirmar con una cotización real que serie-número-revisión es el formato correcto.
         CAST(COALESCE(
@@ -71,9 +106,19 @@ BEGIN
         NULLIF(LTRIM(RTRIM(c.txtnrodoc)), ''),
         NULLIF(LTRIM(RTRIM(c.txtnrorev)), '')
     )) AS doc(serie, numero, revision)
+    CROSS APPLY (VALUES (dbo.fn_NormalizarTelefonoMantra(c.txttlf001))) AS tel(normalizado)
     WHERE (@FechaDesde IS NULL OR c.fecemidoc >= @FechaDesde)
       AND (@FechaHasta IS NULL OR c.fecemidoc < DATEADD(day, 1, @FechaHasta))
-      AND (@Codidtcot IS NULL OR c.codidtcot = @Codidtcot);
+      AND (@Codidtcot IS NULL OR c.codidtcot = @Codidtcot)
+      -- Más de dos días completos: el día D procesa fechas anteriores a D-2.
+      AND c.fecemidoc < DATEADD(day, -2, @FechaProceso)
+      -- numpedgen es bit: 1 indica que ya se generó la orden de venta.
+      AND c.numpedgen = 0
+      AND tel.normalizado IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1 FROM dbo.MantraExportaciones AS e
+          WHERE e.telefono = tel.normalizado
+      );
 
     IF @ComoJson = 1
         SELECT COALESCE((
@@ -102,16 +147,52 @@ BEGIN
                 [Telefono] AS telefono,
                 [email] AS email
             FROM #CotizacionesMantra
-            ORDER BY [Fecha], [N° Cotización]
+            WHERE fila_telefono = 1
+            ORDER BY [Fecha], [N° Cotización], id_interno
             FOR JSON PATH, INCLUDE_NULL_VALUES
-        ), N'[]') AS payload_json;
+        ), N'[]') AS payload_json,
+        -- IDs internos en el mismo orden para confirmar cada envío exitoso.
+        -- No forman parte de los 23 campos del contacto ni se envían al API.
+        COALESCE((
+            SELECT id_interno AS codidtcot, telefono_normalizado AS telefono
+            FROM #CotizacionesMantra
+            WHERE fila_telefono = 1
+            ORDER BY [Fecha], [N° Cotización], id_interno
+            FOR JSON PATH
+        ), N'[]') AS ids_json;
     ELSE
         SELECT * FROM #CotizacionesMantra
+        WHERE fila_telefono = 1
         ORDER BY [Fecha], [N° Cotización];
 END;
 GO
 
+CREATE OR ALTER PROCEDURE dbo.usp_ConfirmarExportacionMantra
+    @Codidtcot char(10),
+    @Telefono char(9),
+    @HttpStatus smallint
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @HttpStatus NOT IN (200, 201)
+        THROW 50002, 'Solo se confirma un envio aceptado por Mantra.', 1;
+    IF LEN(@Telefono) <> 9 OR LEFT(@Telefono, 1) <> '9' OR @Telefono LIKE '%[^0-9]%'
+        THROW 50003, 'Telefono invalido para confirmar exportacion.', 1;
+
+    BEGIN TRANSACTION;
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.MantraExportaciones WITH (UPDLOCK, HOLDLOCK)
+        WHERE telefono = @Telefono
+    )
+        INSERT dbo.MantraExportaciones (telefono, codidtcot, http_status)
+        VALUES (@Telefono, @Codidtcot, @HttpStatus);
+    COMMIT TRANSACTION;
+END;
+GO
+
 -- Ejemplos:
--- EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde='2026-02-02', @FechaHasta='2026-02-02';
+-- EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-10-30';
 -- EXEC dbo.usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO';
 -- Para ver los mismos campos como tabla: EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;

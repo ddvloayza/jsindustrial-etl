@@ -48,16 +48,33 @@ class ContactExportTests(unittest.TestCase):
 
     def test_sp_json_is_read(self):
         cursor = Mock()
-        cursor.fetchall.return_value = [{"payload_json": json.dumps([self.row])}]
+        cursor.fetchall.return_value = [{
+            "payload_json": json.dumps([self.row]),
+            "ids_json": json.dumps([{"codidtcot": "COT0000001", "telefono": "987549210"}]),
+        }]
         connection = Mock()
         connection.cursor.return_value = cursor
         with patch.object(app.pymssql, "connect", return_value=connection), patch.dict(
             app.os.environ, {"MANTRA_SQL_USER": "test", "MANTRA_SQL_PASSWORD": "test"}
         ):
             rows = app.fetch_rows(self.config, date(2026, 2, 2))
-        self.assertEqual(rows, [self.row])
-        self.assertIn("@ComoJson=1", cursor.execute.call_args.args[0])
+        self.assertEqual(rows, [{**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}])
+        self.assertIn("@FechaProceso=%s", cursor.execute.call_args.args[0])
         connection.close.assert_called_once()
+
+    def test_sp_ids_must_match_contacts(self):
+        cursor = Mock()
+        cursor.fetchall.return_value = [{
+            "payload_json": json.dumps([self.row]),
+            "ids_json": "[]",
+        }]
+        connection = Mock()
+        connection.cursor.return_value = cursor
+        with patch.object(app.pymssql, "connect", return_value=connection), patch.dict(
+            app.os.environ, {"MANTRA_SQL_USER": "test", "MANTRA_SQL_PASSWORD": "test"}
+        ):
+            with self.assertRaisesRegex(RuntimeError, "no coinciden"):
+                app.fetch_rows(self.config, date(2026, 2, 2))
 
     def test_json_requires_twenty_custom_fields_and_contact_details(self):
         with self.assertRaisesRegex(ValueError, "le faltan propiedades"):
@@ -72,15 +89,30 @@ class ContactExportTests(unittest.TestCase):
             contact_response.json.return_value = {"resultOp": "created"}
             with patch.dict(app.os.environ, {
                 "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key",
-            }), patch.object(app, "fetch_rows", return_value=[self.row]), patch.object(
+            }), patch.object(app, "fetch_rows", return_value=[{**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}]), patch.object(
                 app, "post", return_value=contact_response
-            ) as request:
+            ) as request, patch.object(app, "confirm_sent") as confirm:
                 summary = app.run(self.config, date(2026, 2, 2), apply_changes=True)
             self.assertEqual(summary["contactos_ok"], 1)
             self.assertEqual([c.args[1] for c in request.call_args_list], ["/contacts/new"])
             self.assertEqual(request.call_args_list[0].args[2]["data"]["phone"], "987549210")
             self.assertEqual(request.call_args_list[0].args[2]["data"]["custom_20"], "2026-02-28")
+            confirm.assert_called_once_with(self.config, "COT0000001", "987549210", 201)
             self.assertIn("contacto", next(Path(temporary).glob("mantra_*.txt")).read_text())
+
+    def test_failed_api_request_does_not_confirm_export(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.config["log_dir"] = temporary
+            contact_response = Mock(status_code=403)
+            contact_response.json.return_value = {"message": "Forbidden"}
+            with patch.dict(app.os.environ, {
+                "MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key",
+            }), patch.object(app, "fetch_rows", return_value=[{**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}]), patch.object(
+                app, "post", return_value=contact_response
+            ), patch.object(app, "confirm_sent") as confirm:
+                summary = app.run(self.config, date(2026, 2, 2), apply_changes=True)
+            self.assertEqual(summary["contactos_ok"], 0)
+            confirm.assert_not_called()
 
     def test_sample_json_dry_run(self):
         sample = app.parse_contacts_json((ROOT / "contactos_prueba.json").read_text(encoding="utf-8"))
@@ -97,7 +129,7 @@ class ContactExportTests(unittest.TestCase):
     def test_sample_json_cannot_be_applied(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
-            with self.assertRaisesRegex(ValueError, "no se puede enviar"):
+            with self.assertRaisesRegex(ValueError, "debe leer el SP"):
                 app.run(self.config, date(2026, 2, 2), True, ROOT / "contactos_prueba.json")
 
 

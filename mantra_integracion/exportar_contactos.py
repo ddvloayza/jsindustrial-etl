@@ -12,7 +12,7 @@ import os
 import re
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -122,13 +122,46 @@ def fetch_rows(config: dict, run_date: date) -> list[dict]:
     try:
         cursor = connection.cursor()
         cursor.execute(
-            "EXEC dbo.usp_ExportarCotizacionesMantra @FechaDesde=%s, @FechaHasta=%s, @ComoJson=1",
-            (run_date, run_date),
+            "EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso=%s, @ComoJson=1",
+            (run_date,),
         )
         rows = cursor.fetchall()
-        if len(rows) != 1 or "payload_json" not in rows[0]:
-            raise RuntimeError("El SP debe devolver una fila con payload_json")
-        return parse_contacts_json(rows[0]["payload_json"])
+        if len(rows) != 1 or not {"payload_json", "ids_json"} <= set(rows[0]):
+            raise RuntimeError("El SP debe devolver payload_json e ids_json")
+        contacts = parse_contacts_json(rows[0]["payload_json"])
+        ids = json.loads(rows[0]["ids_json"])
+        if not isinstance(ids, list) or len(ids) != len(contacts):
+            raise RuntimeError("Los IDs internos no coinciden con los contactos")
+        seen = set()
+        for contact, item in zip(contacts, ids):
+            key = item.get("codidtcot") if isinstance(item, dict) else None
+            phone = item.get("telefono") if isinstance(item, dict) else None
+            if (not isinstance(key, str) or not key.strip()
+                    or not isinstance(phone, str) or not re.fullmatch(r"9\d{8}", phone)
+                    or phone in seen):
+                raise RuntimeError("El SP devolvió un ID o teléfono inválido o duplicado")
+            seen.add(phone)
+            contact["_codidtcot"] = key
+            contact["_telefono_normalizado"] = phone
+        return contacts
+    finally:
+        connection.close()
+
+
+def confirm_sent(config: dict, codidtcot: str, phone: str, http_status: int) -> None:
+    sql = config["sql"]
+    connection = pymssql.connect(
+        server=sql["server"], port=int(sql.get("port", 1433)),
+        user=os.environ["MANTRA_SQL_USER"], password=os.environ["MANTRA_SQL_PASSWORD"],
+        database=sql["database"], login_timeout=10, timeout=30,
+    )
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "EXEC dbo.usp_ConfirmarExportacionMantra @Codidtcot=%s, @Telefono=%s, @HttpStatus=%s",
+            (codidtcot, phone, http_status),
+        )
+        connection.commit()
     finally:
         connection.close()
 
@@ -173,9 +206,9 @@ def response_detail(response: requests.Response) -> str:
 
 
 def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None) -> dict:
+    if apply_changes and json_file:
+        raise ValueError("El envío real debe leer el SP para registrar los éxitos y evitar reenvíos")
     rows = parse_contacts_json(json_file.read_text(encoding="utf-8")) if json_file else fetch_rows(config, run_date)
-    if apply_changes and json_file and json_file.resolve() == (Path(__file__).parent / "contactos_prueba.json").resolve():
-        raise ValueError("El JSON de prueba no se puede enviar a Mantra")
     log_dir = Path(config["log_dir"])
     summary = {"seleccionados": len(rows), "contactos_ok": 0, "errores": 0}
     group_id = os.getenv("MANTRA_GROUP_ID")
@@ -186,8 +219,10 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
     for row in rows:
         lead_id = value_as_text(row.get("numero_cotizacion")) or "SIN_ID"
         try:
-            _, data = build_contact(row, config)
-        except ValueError as exc:
+            phone, data = build_contact(row, config)
+            if apply_changes and phone != row["_telefono_normalizado"]:
+                raise ValueError("El teléfono del SP no coincide con el teléfono del contacto")
+        except (ValueError, KeyError) as exc:
             summary["errores"] += 1
             append_log(log_dir, lead_id, "validacion", "ERROR", detail=str(exc))
             continue
@@ -207,6 +242,13 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
             if contact_response.status_code == 403:
                 break
             continue
+        try:
+            confirm_sent(config, row["_codidtcot"], phone, contact_response.status_code)
+        except (pymssql.Error, KeyError, OSError) as exc:
+            summary["errores"] += 1
+            append_log(log_dir, lead_id, "confirmacion_sql", "ERROR", contact_response.status_code,
+                       f"Mantra aceptó el contacto, pero SQL no confirmó: {type(exc).__name__}")
+            continue
         summary["contactos_ok"] += 1
         append_log(log_dir, lead_id, "contacto", "OK", contact_response.status_code, response_detail(contact_response))
     session.close()
@@ -217,7 +259,7 @@ def main() -> int:
     load_dotenv(Path(__file__).with_name(".env"))
     parser = argparse.ArgumentParser(description="Exporta contactos de SQL Server a Mantra")
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--fecha", type=date.fromisoformat, help="Fecha a procesar, AAAA-MM-DD; por defecto ayer en Lima")
+    parser.add_argument("--fecha", type=date.fromisoformat, help="Fecha de ejecución, AAAA-MM-DD; por defecto hoy en Lima")
     parser.add_argument("--json-file", type=Path, help="Lee contactos desde un JSON local en vez del SP")
     parser.add_argument("--log-dir", type=Path, help="Carpeta de logs para esta ejecución")
     parser.add_argument("--apply", action="store_true", help="Crea/actualiza contactos reales en Mantra")
@@ -225,7 +267,7 @@ def main() -> int:
     config = load_config(args.config)
     if args.log_dir:
         config["log_dir"] = str(args.log_dir)
-    run_date = args.fecha or (datetime.now(ZoneInfo("America/Lima")).date() - timedelta(days=1))
+    run_date = args.fecha or datetime.now(ZoneInfo("America/Lima")).date()
     summary = run(config, run_date, args.apply, args.json_file)
     print(json.dumps({"fecha": run_date.isoformat(), "modo": "APLICAR" if args.apply else "DRY_RUN", **summary}, ensure_ascii=False))
     return 1 if summary["errores"] else 0
