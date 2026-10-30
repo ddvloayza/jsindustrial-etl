@@ -6,7 +6,7 @@ La imagen refleja la propuesta original. **El alcance actual termina en crear o 
 
 ## Flujo implementado
 
-1. El Programador de tareas de Windows ejecuta `run_mantra.ps1` una vez al día.
+1. SQL Server Agent ejecuta un job diario con un paso `CmdExec` que llama `run_mantra.ps1` y, desde allí, a Python. El [script de registro del job](registrar_job_sql_agent.sql) queda preparado para instalarlo en el servidor Windows. El antiguo `registrar_tarea.ps1` queda como alternativa; no se deben activar ambos programadores.
 2. Python llama `dbo.usp_ExportarCotizacionesMantra` con la fecha actual de Lima. El SP considera todas las cotizaciones anteriores a esa fecha menos dos días completos, excluye las que ya generaron orden de venta (`numpedgen = 1`) y los teléfonos con envío exitoso en `dbo.MantraExportaciones`. Si hay varias cotizaciones pendientes para un teléfono, toma la más reciente. Devuelve `payload_json` con los 23 datos del contacto e `ids_json` con los identificadores internos para confirmar el envío.
 3. Valida nombre y teléfono. Para Perú acepta nueve dígitos que empiecen en 9, con o sin prefijo 51, y envía `countryCode="51"` separado del teléfono.
 4. Envía `POST https://wbpback.mantra.chat/contacts/new` con `groupId`, `apiKey`, `data.name`, `data.phone`, `data.countryCode`, correo opcional y hasta veinte `custom_*`.
@@ -39,7 +39,7 @@ El PDF entregado documenta `custom_1` a `custom_10`. La interfaz muestra 20 camp
 | `custom_19` | `porcentaje_inventario_disponible` | % Invent. Dispon. |
 | `custom_20` | `fecha_estimada_cierre` | fec_Estim_Cierre |
 
-**Sin valor verificable en el backup:** Cargo, Area, Invent. Disponible, % Invent. Dispon. y fec_Estim_Cierre. El SP los incluye como `null` en el JSON y Python no envía esos `custom_*` hasta que se defina su origen. Por ahora se envían como máximo 15 campos personalizados con valor, más nombre, teléfono y correo cuando corresponda. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Cada objeto representa una cotización candidata a contacto; si dos cotizaciones tienen el mismo teléfono, ambas se procesan y Mantra puede actualizar el mismo contacto.
+**Sin valor verificable en el backup:** Cargo, Area, Invent. Disponible, % Invent. Dispon. y fec_Estim_Cierre. El SP los incluye como `null` en el JSON y Python no envía esos `custom_*` hasta que se defina su origen. Por ahora se envían como máximo 15 campos personalizados con valor, más nombre, teléfono y correo cuando corresponda. Los valores de vendedor, condición de venta, fuente y estado siguen siendo códigos/IDs hasta contar con sus catálogos. Si hay varias cotizaciones elegibles para el mismo teléfono, el SP entrega solo la más reciente.
 
 ## Probar con el JSON ficticio
 
@@ -49,7 +49,7 @@ Primero copia `.env.example` a `.env` si todavía no existe. Git ignora el `.env
 python exportar_contactos.py --config config.example.json --json-file contactos_prueba.json --log-dir ./logs
 ```
 
-En Windows el comando es el mismo, usando `py` si así está instalado Python. Este modo no requiere SQL Server, `groupId` ni API key; valida los tres objetos de ejemplo y escribe el resultado en `./logs`. No llama a Mantra. El script rechaza `--apply` cuando se usa directamente el archivo `contactos_prueba.json` incluido en el repositorio.
+En Windows el comando es el mismo, usando `py` si así está instalado Python. Este modo no requiere SQL Server, `groupId` ni API key; valida los tres objetos de ejemplo y escribe el resultado en `./logs`. No llama a Mantra. El script rechaza `--apply` con cualquier `--json-file`, porque un envío real debe confirmar el resultado en SQL Server.
 
 Para inspeccionar pendientes en SQL Server, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05';`. Ese día se consideran cotizaciones anteriores al 3 de febrero. El resultado incluye `payload_json` e `ids_json`; puedes copiar `payload_json` a un archivo UTF-8 para probar la validación con `--json-file`. La ejecución real con `--apply` debe leer directamente del SP para registrar cada éxito y evitar reenvíos; no admite `--json-file`.
 
@@ -61,20 +61,22 @@ Edita `mantra_integracion/.env` con un editor de texto. Python lo lee automátic
 | --- | --- | --- |
 | `MANTRA_GROUP_ID` | Consulta o creación de contactos | ID del grupo en Mantra |
 | `MANTRA_API_KEY` | Consulta o creación de contactos | API key de ese grupo |
-| `MANTRA_SQL_USER` | Solo cuando Python lee el SP directamente | Usuario de SQL Server |
-| `MANTRA_SQL_PASSWORD` | Solo cuando Python lee el SP directamente | Contraseña de ese usuario |
 
-Con `--json-file` solo completa las dos variables de Mantra. El servidor y la base SQL se configuran aparte en `config.json` cuando uses el SP. Nunca pongas estas credenciales en el JSON de contactos.
+En el flujo con SQL Server Agent, `config.json` usa `sql.authentication = "windows"`. Python se conecta con la identidad de Windows del proxy del job mediante ODBC; **no necesita usuario ni contraseña de SQL en `.env`**. El servidor y la base se configuran en `config.json`. La cuenta proxy necesita permisos `EXECUTE` sobre ambos SP, lectura del `.env` y escritura en la carpeta de logs. La API key de Mantra sí sigue en `.env`.
+
+Para pruebas fuera de ese servidor, se conserva el modo opcional `sql.authentication = "sql"`, que usa `MANTRA_SQL_USER` y `MANTRA_SQL_PASSWORD` como variables de entorno. No se requieren en el job con autenticación de Windows.
 
 ## Preparación en Windows
 
-1. Instalar Python 3.10+ y `pip install -r requirements.txt`.
+1. En el servidor Windows que ejecuta SQL Server Agent, instalar Python 3.10+, las dependencias de `requirements.txt` y Microsoft ODBC Driver 18 for SQL Server. La conexión integrada exige que la cuenta del job tenga acceso al servidor SQL y que su certificado TLS sea confiable para ODBC.
 2. Ejecutar todo el SQL de `../diagrama-mantra/usp_ExportarCotizacionesMantra.sql` en la base real. Crea `dbo.MantraExportaciones`, una función de normalización de teléfono y dos SP.
-3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. `config.json` todavía no está creado en esta copia del proyecto. El usuario que ejecute la tarea necesita lectura de `dbo.CotizacionesC` y permiso `EXECUTE` sobre ambos SP y sobre `dbo.fn_NormalizarTelefonoMantra`.
-4. Completar las cuatro variables de `.env` para la cuenta que ejecutará la tarea. No guardar secretos en `config.json`, el repositorio o el TXT.
+3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. Mantener `"authentication": "windows"`. `config.json` todavía no está creado en esta copia del proyecto.
+4. Completar solo `MANTRA_GROUP_ID` y `MANTRA_API_KEY` en `.env`. Dar acceso de lectura a ese archivo únicamente a la cuenta que ejecutará el job. No guardar secretos en `config.json`, el repositorio o el TXT.
 5. Probar sin modificar Mantra: `python exportar_contactos.py --config config.json`. Revisar el TXT y el conteo de contactos pendientes.
 6. Tras confirmar el mapeo y la regla, ejecutar una prueba autorizada con `python exportar_contactos.py --config config.json --apply`. Revisar el TXT y `dbo.MantraExportaciones` para comprobar qué teléfonos se confirmaron.
-7. Registrar el horario acordado: `powershell -File .\registrar_tarea.ps1 -Hora "07:00"`. La tarea usa la fecha actual de Lima y recupera pendientes de días anteriores.
+7. El administrador de SQL Server debe crear un proxy de Agent habilitado para `CmdExec` con una cuenta de Windows de permisos limitados. Editar `@ProxyName`, `@Launcher`, `@PythonExe` y `@HoraHHMMSS` en `registrar_job_sql_agent.sql` y ejecutar el script en SSMS. La hora se interpreta en la zona horaria del **servidor**, mientras Python calcula la fecha de selección en Lima. El job recupera pendientes de días anteriores. No crear además la tarea con `registrar_tarea.ps1`.
+
+El job de SQL Server Agent es un objeto de `msdb` administrado por el servicio SQL Server Agent; el SP de la base sigue generando el JSON. Agent dispara Python, y Python llama al SP usando la identidad de Windows del proxy. SQL Server Express no permite utilizar SQL Server Agent para esta programación; en esa edición se puede usar el Programador de tareas de Windows con la misma autenticación integrada.
 
 ## Prueba de acceso a Mantra sin SQL Server
 
@@ -97,4 +99,4 @@ El paso 2 escribe en Mantra, pero no envía ningún WhatsApp.
 - Definir equivalencias de los códigos de vendedor, condición de venta, fuente y estado si Mantra necesita sus descripciones.
 - Mantener y respaldar la carpeta de TXT para revisar resultados y errores de cada ejecución.
 
-Se creó un contacto de prueba autorizado en Mantra (HTTP 201, `created`) y una consulta posterior confirmó los 13 datos enviados. El JSON de esa prueba se guardó en `contacto_envio.local.json`, ignorado por Git. La nueva regla de selección y confirmación se probó contra una restauración temporal del backup con cinco cotizaciones ficticias, pero aún no se ha probado en el servidor del cliente ni se ha instalado una tarea programada allí.
+Se creó un contacto de prueba autorizado en Mantra (HTTP 201, `created`) y una consulta posterior confirmó los 13 datos enviados. El JSON de esa prueba se guardó en `contacto_envio.local.json`, ignorado por Git. La regla de selección y confirmación se probó contra una restauración temporal del backup con cinco cotizaciones ficticias. El job de Agent y la conexión integrada aún no se han probado en el servidor del cliente.

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class ContactExportTests(unittest.TestCase):
     def setUp(self):
         self.config = app.load_config(ROOT / "config.example.json")
+        self.config["sql"]["authentication"] = "sql"
         self.row = {name: None for name in app.ALL_JSON_FIELDS}
         self.row.update({
             "numero_cotizacion": "0001-0027924-1", "fecha": "2026-02-02",
@@ -75,6 +76,37 @@ class ContactExportTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, "no coinciden"):
                 app.fetch_rows(self.config, date(2026, 2, 2))
+
+    def test_windows_auth_uses_job_identity_without_sql_password(self):
+        self.config["sql"]["authentication"] = "windows"
+        cursor = Mock()
+        cursor.description = [("payload_json",), ("ids_json",)]
+        cursor.fetchall.return_value = [(
+            json.dumps([self.row]),
+            json.dumps([{"codidtcot": "COT0000001", "telefono": "987549210"}]),
+        )]
+        connection = Mock()
+        connection.cursor.return_value = cursor
+        with patch.object(app.pyodbc, "connect", return_value=connection) as connect, patch.dict(
+            app.os.environ, {"MANTRA_SQL_USER": "", "MANTRA_SQL_PASSWORD": ""}
+        ):
+            rows = app.fetch_rows(self.config, date(2026, 2, 2))
+        self.assertEqual(rows[0]["_telefono_normalizado"], "987549210")
+        self.assertIn("Trusted_Connection=yes", connect.call_args.args[0])
+        self.assertNotIn("UID=", connect.call_args.args[0])
+        self.assertIn("@FechaProceso=?", cursor.execute.call_args.args[0])
+        connection.close.assert_called_once()
+
+    def test_windows_auth_confirms_contact_with_odbc_parameters(self):
+        self.config["sql"]["authentication"] = "windows"
+        connection = Mock()
+        with patch.object(app.pyodbc, "connect", return_value=connection):
+            app.confirm_sent(self.config, "COT0000001", "987549210", 201)
+        query, values = connection.cursor.return_value.execute.call_args.args
+        self.assertIn("@Codidtcot=?", query)
+        self.assertIn("@Telefono=?", query)
+        self.assertEqual(values, ("COT0000001", "987549210", 201))
+        connection.commit.assert_called_once()
 
     def test_json_requires_twenty_custom_fields_and_contact_details(self):
         with self.assertRaisesRegex(ValueError, "le faltan propiedades"):

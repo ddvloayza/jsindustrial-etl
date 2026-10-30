@@ -18,6 +18,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pymssql
+import pyodbc
 import requests
 from dotenv import load_dotenv
 
@@ -35,6 +36,9 @@ ALL_JSON_FIELDS = [
 
 def load_config(path: Path) -> dict:
     config = json.loads(path.read_text(encoding="utf-8"))
+    auth = config.get("sql", {}).get("authentication", "sql")
+    if auth not in ("sql", "windows"):
+        raise ValueError("sql.authentication debe ser 'sql' o 'windows'")
     custom = config.get("custom_fields", {})
     if not isinstance(custom, dict) or len(custom) > 20:
         raise ValueError("custom_fields debe contener como máximo 20 entradas")
@@ -45,6 +49,33 @@ def load_config(path: Path) -> dict:
     if missing:
         raise ValueError(f"Propiedades JSON del SP no reconocidas: {sorted(missing)}")
     return config
+
+
+def connect_sql(config: dict, *, query_timeout: int):
+    sql = config["sql"]
+    if sql.get("authentication", "sql") == "windows":
+        driver = sql.get("odbc_driver", "ODBC Driver 18 for SQL Server")
+        server = sql["server"]
+        if sql.get("port"):
+            server = f"{server},{int(sql['port'])}"
+        connection = pyodbc.connect(
+            f"DRIVER={{{driver}}};SERVER={server};DATABASE={sql['database']};"
+            "Trusted_Connection=yes;Encrypt=yes;TrustServerCertificate=no;",
+            timeout=10,
+        )
+        connection.timeout = query_timeout
+        return connection
+    if not os.getenv("MANTRA_SQL_USER") or not os.getenv("MANTRA_SQL_PASSWORD"):
+        raise ValueError("Faltan MANTRA_SQL_USER o MANTRA_SQL_PASSWORD para autenticación SQL")
+    return pymssql.connect(
+        server=sql["server"], port=int(sql.get("port", 1433)),
+        user=os.environ["MANTRA_SQL_USER"], password=os.environ["MANTRA_SQL_PASSWORD"],
+        database=sql["database"], as_dict=True, login_timeout=10, timeout=query_timeout,
+    )
+
+
+def sql_placeholder(config: dict) -> str:
+    return "?" if config["sql"].get("authentication", "sql") == "windows" else "%s"
 
 
 def normalize_phone(raw: object, country_code: str) -> str | None:
@@ -111,21 +142,18 @@ def parse_contacts_json(payload: str) -> list[dict]:
 
 
 def fetch_rows(config: dict, run_date: date) -> list[dict]:
-    sql = config["sql"]
-    if not os.getenv("MANTRA_SQL_USER") or not os.getenv("MANTRA_SQL_PASSWORD"):
-        raise ValueError("Faltan MANTRA_SQL_USER o MANTRA_SQL_PASSWORD")
-    connection = pymssql.connect(
-        server=sql["server"], port=int(sql.get("port", 1433)),
-        user=os.environ["MANTRA_SQL_USER"], password=os.environ["MANTRA_SQL_PASSWORD"],
-        database=sql["database"], as_dict=True, login_timeout=10, timeout=120,
-    )
+    connection = connect_sql(config, query_timeout=120)
     try:
         cursor = connection.cursor()
+        placeholder = sql_placeholder(config)
         cursor.execute(
-            "EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso=%s, @ComoJson=1",
+            f"EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1",
             (run_date,),
         )
         rows = cursor.fetchall()
+        if rows and not isinstance(rows[0], dict):
+            columns = [column[0] for column in cursor.description]
+            rows = [dict(zip(columns, row)) for row in rows]
         if len(rows) != 1 or not {"payload_json", "ids_json"} <= set(rows[0]):
             raise RuntimeError("El SP debe devolver payload_json e ids_json")
         contacts = parse_contacts_json(rows[0]["payload_json"])
@@ -149,16 +177,13 @@ def fetch_rows(config: dict, run_date: date) -> list[dict]:
 
 
 def confirm_sent(config: dict, codidtcot: str, phone: str, http_status: int) -> None:
-    sql = config["sql"]
-    connection = pymssql.connect(
-        server=sql["server"], port=int(sql.get("port", 1433)),
-        user=os.environ["MANTRA_SQL_USER"], password=os.environ["MANTRA_SQL_PASSWORD"],
-        database=sql["database"], login_timeout=10, timeout=30,
-    )
+    connection = connect_sql(config, query_timeout=30)
     try:
         cursor = connection.cursor()
+        placeholder = sql_placeholder(config)
         cursor.execute(
-            "EXEC dbo.usp_ConfirmarExportacionMantra @Codidtcot=%s, @Telefono=%s, @HttpStatus=%s",
+            f"EXEC dbo.usp_ConfirmarExportacionMantra @Codidtcot={placeholder}, "
+            f"@Telefono={placeholder}, @HttpStatus={placeholder}",
             (codidtcot, phone, http_status),
         )
         connection.commit()
@@ -244,7 +269,7 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
             continue
         try:
             confirm_sent(config, row["_codidtcot"], phone, contact_response.status_code)
-        except (pymssql.Error, KeyError, OSError) as exc:
+        except (pymssql.Error, pyodbc.Error, KeyError, OSError) as exc:
             summary["errores"] += 1
             append_log(log_dir, lead_id, "confirmacion_sql", "ERROR", contact_response.status_code,
                        f"Mantra aceptó el contacto, pero SQL no confirmó: {type(exc).__name__}")
