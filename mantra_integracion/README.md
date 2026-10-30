@@ -72,7 +72,7 @@ Para pruebas fuera de ese servidor, se conserva el modo opcional `sql.authentica
 2. Ejecutar todo el SQL de `../diagrama-mantra/usp_ExportarCotizacionesMantra.sql` en la base real. Crea `dbo.MantraExportaciones`, una función de normalización de teléfono y dos SP.
 3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. Mantener `"authentication": "windows"`. `config.json` todavía no está creado en esta copia del proyecto.
 4. Completar solo `MANTRA_GROUP_ID` y `MANTRA_API_KEY` en `.env`. Dar acceso de lectura a ese archivo únicamente a la cuenta que ejecutará el job. No guardar secretos en `config.json`, el repositorio o el TXT.
-5. Probar sin modificar Mantra: `python exportar_contactos.py --config config.json`. Revisar el TXT y el conteo de contactos pendientes.
+5. Probar sin modificar Mantra: `powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -DryRun`. Revisar el TXT y el conteo de contactos pendientes. También se puede llamar Python directamente sin `--apply`.
 6. Tras confirmar el mapeo y la regla, ejecutar una prueba autorizada con `python exportar_contactos.py --config config.json --apply`. Revisar el TXT y `dbo.MantraExportaciones` para comprobar qué teléfonos se confirmaron.
 7. El administrador de SQL Server debe crear un proxy de Agent habilitado para `CmdExec` con una cuenta de Windows de permisos limitados. Editar `@ProxyName`, `@Launcher`, `@PythonExe` y `@HoraHHMMSS` en `registrar_job_sql_agent.sql` y ejecutar el script en SSMS. La hora se interpreta en la zona horaria del **servidor**, mientras Python calcula la fecha de selección en Lima. El job recupera pendientes de días anteriores. No crear además la tarea con `registrar_tarea.ps1`.
 
