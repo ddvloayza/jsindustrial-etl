@@ -11,7 +11,7 @@ Imagen original extraída de la página 2 de la propuesta. Allí figura un enví
 ## Carpetas
 
 - [`diagrama-mantra/`](diagrama-mantra/): diagrama editable de entidades, esquema JSON, auditoría de campos y `usp_ExportarCotizacionesMantra.sql`.
-- [`mantra_integracion/`](mantra_integracion/): script Python, configuración de ejemplo, pruebas, lanzador y [job de SQL Server Agent](mantra_integracion/registrar_job_sql_agent.sql) para Windows. Lee [su instructivo](mantra_integracion/README.md) antes de desplegar.
+- [`mantra_integracion/`](mantra_integracion/): script Python, configuración de ejemplo, pruebas, lanzador y [job de SQL Server Agent](mantra_integracion/registrar_job_sql_agent.sql) para Windows. Sigue el [runbook de instalación](mantra_integracion/runbook.md) antes de desplegar.
 
 ## Estado
 

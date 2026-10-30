@@ -4,6 +4,8 @@
 
 La imagen refleja la propuesta original. **El alcance actual termina en crear o actualizar contactos; no se envían plantillas ni mensajes.**
 
+Para instalarlo en Windows con SQL Server Agent, sigue el [runbook paso a paso](runbook.md).
+
 ## Flujo implementado
 
 1. SQL Server Agent ejecuta un job diario con un paso `CmdExec` que llama `run_mantra.ps1` y, desde allí, a Python. El [script de registro del job](registrar_job_sql_agent.sql) queda preparado para instalarlo en el servidor Windows. El antiguo `registrar_tarea.ps1` queda como alternativa; no se deben activar ambos programadores.
