@@ -77,7 +77,8 @@ BEGIN
         c.txtnomatt AS [Nombre del contacto],
         CAST(NULL AS varchar(100)) AS [Cargo],
         CAST(NULL AS varchar(100)) AS [Area],
-        c.txttlf001 AS [Telefono],
+        -- El JSON lleva nueve dígitos; countryCode=51 se agrega al llamar al API.
+        tel.normalizado AS [Telefono],
         c.txtcorele AS [email],
         CASE LTRIM(RTRIM(c.codtipmon))
             WHEN 'USD' THEN 'US$' WHEN 'DOL' THEN 'US$'

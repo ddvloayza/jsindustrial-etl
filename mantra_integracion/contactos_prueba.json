@@ -33,7 +33,7 @@
     "fuente_contacto": "2",
     "referencia": "Cotización de prueba B",
     "nombre_contacto": "LUIS EJEMPLO",
-    "telefono": "+51 912 345 678",
+    "telefono": "912345678",
     "email": "luis@example.com",
     "moneda": "US$",
     "total_documento": 300.0,

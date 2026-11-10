@@ -75,7 +75,7 @@ powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe"
 
 La salida debe indicar `"modo": "DRY_RUN"`, el número de contactos seleccionados y los errores. Revisar además el TXT en `C:\Mantra\logs`. Este comando consulta el SP y valida los contactos, **sin llamar al API de Mantra ni registrar envíos**. Si se prueba desde una cuenta distinta de la cuenta proxy, el administrador debe verificar también los permisos de esta última.
 
-La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.MantraExportaciones`. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
+La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
 
 ## 7. Registrar el job diario
 

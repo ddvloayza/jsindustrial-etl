@@ -20,5 +20,5 @@ custom_18,inventario_disponible,Invent. Disponible,Sin origen verificado,NULL en
 custom_19,porcentaje_inventario_disponible,% Invent. Dispon.,Sin origen verificado,NULL en JSON; omitido en API
 custom_20,fecha_estimada_cierre,fec_Estim_Cierre,Sin origen verificado,NULL en JSON; omitido en API
 data.name,nombre_contacto,Nombre del contacto,txtnomatt,Si está vacío usa cliente; obligatorio para envío
-data.phone,telefono,Telefono,txttlf001,Obligatorio; se valida como celular peruano
+data.phone,telefono,Telefono,txttlf001 mediante fn_NormalizarTelefonoMantra,Obligatorio; nueve dígitos sin +51
 data.email,email,email,txtcorele,Opcional; se envía si contiene @

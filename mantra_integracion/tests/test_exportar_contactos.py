@@ -149,6 +149,7 @@ class ContactExportTests(unittest.TestCase):
     def test_sample_json_dry_run(self):
         sample = app.parse_contacts_json((ROOT / "contactos_prueba.json").read_text(encoding="utf-8"))
         self.assertEqual(len(sample[0]), 23)
+        self.assertEqual([row["telefono"] for row in sample], ["987654321", "912345678", "923456789"])
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
             with patch.object(app, "fetch_rows") as db, patch.object(app, "post") as request:

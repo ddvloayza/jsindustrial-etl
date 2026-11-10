@@ -18,7 +18,7 @@ El JSON distribuye veinte columnas entre `custom_1` y `custom_20` de Mantra. Las
 | Nombre del contacto | `txtnomatt` | Directo |
 | Cargo | Sin campo equivalente | `NULL` |
 | Area | Sin campo equivalente | `NULL` |
-| Telefono | `txttlf001` | Directo |
+| Telefono | `txttlf001` mediante `dbo.fn_NormalizarTelefonoMantra` | Nueve dígitos peruanos; quita `+51` y separadores; teléfonos inválidos quedan fuera |
 | email | `txtcorele` | Directo |
 | Moneda | `codtipmon` | Conversión conocida USD/DOL→US$, PEN/SOL→S/; otros códigos sin transformar |
 | Total Docum. | `numtotdoc` | Directo |
