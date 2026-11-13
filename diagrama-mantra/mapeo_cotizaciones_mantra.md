@@ -1,6 +1,6 @@
 # Mapeo de cotizaciones para Mantra
 
-El procedimiento `dbo.usp_ExportarCotizacionesMantra` reproduce las 23 columnas del Excel de ejemplo. La base disponible contiene `dbo.CotizacionesC` y `dbo.CotizacionesD`; las 23 columnas corresponden a la cabecera, por lo que el SP devuelve una fila por cotización. **`numero_cotizacion` no es una columna de la BD:** es una propiedad del JSON calculada para representar `N° Cotización` del Excel.
+El procedimiento `dbo.JS_usp_ExportarCotizacionesMantra` reproduce las 23 columnas del Excel de ejemplo. La base disponible contiene `dbo.CotizacionesC` y `dbo.CotizacionesD`; las 23 columnas corresponden a la cabecera, por lo que el SP devuelve una fila por cotización. **`numero_cotizacion` no es una columna de la BD:** es una propiedad del JSON calculada para representar `N° Cotización` del Excel.
 
 El JSON distribuye veinte columnas entre `custom_1` y `custom_20` de Mantra. Las otras tres (`Nombre del contacto`, `Telefono`, `email`) se usan como nombre, teléfono y correo estándar. El mapeo numerado está en `../mantra_integracion/README.md`. Ninguna columna queda fuera por el límite de campos personalizados.
 
@@ -39,4 +39,4 @@ El JSON distribuye veinte columnas entre `custom_1` y `custom_20` de Mantra. Las
 3. Verificar con una cotización real la composición de `N° Cotización`, la moneda, `Total M.N.` y `Comentario`.
 4. Mantener la API key y el group ID en el integrador, fuera del procedimiento y del repositorio.
 
-Uso: `EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05', @ComoJson=1;` devuelve los contactos pendientes en `payload_json` y sus identificadores en `ids_json`. La fecha de ejemplo selecciona cotizaciones anteriores al 3 de febrero, sin orden de venta generada (`numpedgen = 0`) y cuyos teléfonos todavía no constan en `dbo.JS_MantraExportaciones`. Después de cada respuesta HTTP 200/201, el integrador confirma el teléfono mediante `dbo.usp_ConfirmarExportacionMantra`.
+Uso: `EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05', @ComoJson=1;` devuelve los contactos pendientes en `payload_json` y sus identificadores en `ids_json`. La fecha de ejemplo selecciona cotizaciones anteriores al 3 de febrero, sin orden de venta generada (`numpedgen = 0`) y cuyos teléfonos todavía no constan en `dbo.JS_MantraExportaciones`. Después de cada respuesta HTTP 200/201, el integrador confirma el teléfono mediante `dbo.JS_usp_ConfirmarExportacionMantra`.

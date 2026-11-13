@@ -5,17 +5,8 @@
   provisional (ver mapeo_cotizaciones_mantra.md).
   Selecciona contactos con una cotización de más de dos días completos,
   sin orden de venta generada y sin envío exitoso registrado para el teléfono.
-  El integrador confirma cada éxito mediante usp_ConfirmarExportacionMantra.
+  El integrador confirma cada éxito mediante JS_usp_ConfirmarExportacionMantra.
 */
--- Si ya se instaló la versión anterior, conservar su historial al renombrarla.
-IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NOT NULL
-   AND OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NOT NULL
-    THROW 50005, 'Existen ambas tablas de exportaciones; revisar el historial antes de instalar.', 1;
-
-IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NOT NULL
-    EXEC sys.sp_rename N'dbo.MantraExportaciones', N'JS_MantraExportaciones', N'OBJECT';
-GO
-
 IF OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.JS_MantraExportaciones (
@@ -43,7 +34,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_ExportarCotizacionesMantra
+CREATE OR ALTER PROCEDURE dbo.JS_usp_ExportarCotizacionesMantra
     @FechaDesde date = NULL,
     @FechaHasta date = NULL,
     @Codidtcot char(10) = NULL,
@@ -189,7 +180,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_ConfirmarExportacionMantra
+CREATE OR ALTER PROCEDURE dbo.JS_usp_ConfirmarExportacionMantra
     @Codidtcot char(10),
     @Telefono char(9),
     @HttpStatus smallint
@@ -215,6 +206,6 @@ END;
 GO
 
 -- Ejemplos:
--- EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-10-30';
--- EXEC dbo.usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO';
--- Para ver los mismos campos como tabla: EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;
+-- EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso='2026-10-30';
+-- EXEC dbo.JS_usp_ExportarCotizacionesMantra @Codidtcot='COD_INTERNO';
+-- Para ver los mismos campos como tabla: EXEC dbo.JS_usp_ExportarCotizacionesMantra @ComoJson=0;

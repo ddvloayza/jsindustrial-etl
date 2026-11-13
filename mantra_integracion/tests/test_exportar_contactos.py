@@ -60,6 +60,7 @@ class ContactExportTests(unittest.TestCase):
         ):
             rows = app.fetch_rows(self.config, date(2026, 2, 2))
         self.assertEqual(rows, [{**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}])
+        self.assertIn("EXEC dbo.JS_usp_ExportarCotizacionesMantra", cursor.execute.call_args.args[0])
         self.assertIn("@FechaProceso=%s", cursor.execute.call_args.args[0])
         connection.close.assert_called_once()
 
@@ -124,6 +125,7 @@ class ContactExportTests(unittest.TestCase):
         with patch.object(app.pyodbc, "connect", return_value=connection):
             app.confirm_sent(self.config, "COT0000001", "987549210", 201)
         query, values = connection.cursor.return_value.execute.call_args.args
+        self.assertIn("EXEC dbo.JS_usp_ConfirmarExportacionMantra", query)
         self.assertIn("@Codidtcot=?", query)
         self.assertIn("@Telefono=?", query)
         self.assertEqual(values, ("COT0000001", "987549210", 201))

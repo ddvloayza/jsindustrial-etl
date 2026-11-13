@@ -29,7 +29,7 @@ Si el servidor no tiene acceso SSH a GitHub, copiar allí el repositorio por un 
 
 En SQL Server Management Studio (SSMS), seleccionar la base real **`BD_MANTRA`** y ejecutar completo [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql). No ejecutarlo en `master` ni en `msdb`.
 
-El archivo crea `dbo.JS_MantraExportaciones`, `dbo.fn_NormalizarTelefonoMantra`, `dbo.usp_ExportarCotizacionesMantra` y `dbo.usp_ConfirmarExportacionMantra`. Si existe la tabla de la versión anterior, la renombra y conserva su historial. El primer SP devuelve los contactos pendientes; el segundo registra un teléfono solo después de que Mantra responda HTTP 200 o 201.
+El archivo crea `dbo.JS_MantraExportaciones`, `dbo.fn_NormalizarTelefonoMantra`, `dbo.JS_usp_ExportarCotizacionesMantra` y `dbo.JS_usp_ConfirmarExportacionMantra`. El primer SP devuelve los contactos pendientes; el segundo registra un teléfono solo después de que Mantra responda HTTP 200 o 201.
 
 ## 4. Crear los archivos locales de configuración
 
@@ -77,10 +77,10 @@ La salida debe indicar `"modo": "DRY_RUN"`, el número de contactos seleccionado
 
 La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.JS_MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
 
-Para probar **un solo contacto** con el mismo flujo del job, instalar primero la versión actual del SP (sección 2). El filtro está en `dbo.usp_ExportarCotizacionesMantra`, dentro del `WHERE` sobre `dbo.CotizacionesC`; `@MaxContactos` se aplica después de los filtros y de elegir una cotización por teléfono. En SSMS se puede inspeccionar el primero, ordenado del más antiguo al más reciente:
+Para probar **un solo contacto** con el mismo flujo del job, instalar primero la versión actual del SP (sección 2). El filtro está en `dbo.JS_usp_ExportarCotizacionesMantra`, dentro del `WHERE` sobre `dbo.CotizacionesC`; `@MaxContactos` se aplica después de los filtros y de elegir una cotización por teléfono. En SSMS se puede inspeccionar el primero, ordenado del más antiguo al más reciente:
 
 ```sql
-EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson = 0, @MaxContactos = 1;
+EXEC dbo.JS_usp_ExportarCotizacionesMantra @ComoJson = 0, @MaxContactos = 1;
 ```
 
 Desde la carpeta `mantra_integracion`, probar primero sin envío y luego enviar ese único contacto:
@@ -94,7 +94,7 @@ La segunda línea crea o actualiza el contacto en Mantra y registra el éxito en
 
 ## 7. Prueba manual con archivo JSON
 
-Antes de programar el job, puedes probar el recorrido completo en la máquina virtual. En SSMS, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;` para ver qué cotizaciones están pendientes. Si deseas probar una sola, anota su `id_interno`. El SP devuelve el JSON; el comando siguiente vuelve a ejecutarlo y **guarda** el resultado en un archivo sin copiarlo desde SSMS.
+Antes de programar el job, puedes probar el recorrido completo en la máquina virtual. En SSMS, ejecuta `EXEC dbo.JS_usp_ExportarCotizacionesMantra @ComoJson=0;` para ver qué cotizaciones están pendientes. Si deseas probar una sola, anota su `id_interno`. El SP devuelve el JSON; el comando siguiente vuelve a ejecutarlo y **guarda** el resultado en un archivo sin copiarlo desde SSMS.
 
 Desde `C:\Mantra\jsindustrial-etl\mantra_integracion`:
 

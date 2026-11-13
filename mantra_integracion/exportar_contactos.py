@@ -165,7 +165,7 @@ def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None,
     try:
         cursor = connection.cursor()
         placeholder = sql_placeholder(config)
-        query = f"EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1"
+        query = f"EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1"
         params: tuple = (run_date,)
         if codidtcot is not None:
             query += f", @Codidtcot={placeholder}"
@@ -229,7 +229,7 @@ def confirm_sent(config: dict, codidtcot: str, phone: str, http_status: int) -> 
         cursor = connection.cursor()
         placeholder = sql_placeholder(config)
         cursor.execute(
-            f"EXEC dbo.usp_ConfirmarExportacionMantra @Codidtcot={placeholder}, "
+            f"EXEC dbo.JS_usp_ConfirmarExportacionMantra @Codidtcot={placeholder}, "
             f"@Telefono={placeholder}, @HttpStatus={placeholder}",
             (codidtcot, phone, http_status),
         )
