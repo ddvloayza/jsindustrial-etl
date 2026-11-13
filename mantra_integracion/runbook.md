@@ -77,7 +77,23 @@ La salida debe indicar `"modo": "DRY_RUN"`, el número de contactos seleccionado
 
 La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
 
-## 7. Registrar el job diario
+## 7. Prueba manual con archivo JSON
+
+Antes de programar el job, puedes probar el recorrido completo en la máquina virtual. En SSMS, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;` para ver qué cotizaciones están pendientes. Si deseas probar una sola, anota su `id_interno`. El SP devuelve el JSON; el comando siguiente vuelve a ejecutarlo y **guarda** el resultado en un archivo sin copiarlo desde SSMS.
+
+Desde `C:\Mantra\jsindustrial-etl\mantra_integracion`:
+
+```powershell
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --export-json .\pendientes.local.json --codidtcot COD_INTERNO
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --json-file .\pendientes.local.json
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --json-file .\pendientes.local.json --apply
+```
+
+Sustituye `COD_INTERNO` por el valor real o quita `--codidtcot COD_INTERNO` para exportar todos los pendientes. El archivo `.local.json` contiene los 23 datos de cada contacto y, aparte, los IDs necesarios para confirmar los envíos en SQL. La segunda línea es una simulación. La tercera usa `MANTRA_GROUP_ID` y `MANTRA_API_KEY` de `.env`, envía contactos reales y necesita la conexión SQL para comprobar que siguen pendientes y registrar los éxitos.
+
+En la captura entregada, los ocho campos visibles están contemplados. Hay dos diferencias que revisar con datos reales: `Vendedor` sale como código (`codmtrven`) porque el backup no incluye su catálogo de nombres, y las filas sin teléfono válido quedan fuera. `Generó O/V = true` también queda fuera por ser una cotización ya completada.
+
+## 8. Registrar el job diario
 
 Editar [`registrar_job_sql_agent.sql`](registrar_job_sql_agent.sql):
 
@@ -90,7 +106,7 @@ Editar [`registrar_job_sql_agent.sql`](registrar_job_sql_agent.sql):
 
 Con los valores revisados, ejecutar el archivo en SSMS. El script usa `msdb`, crea el job `JS Industrial - Exportar contactos a Mantra` y lo deja **habilitado**. Su primera ejecución programada enviará todos los contactos pendientes que cumplan la regla. No registrar simultáneamente [`registrar_tarea.ps1`](registrar_tarea.ps1).
 
-## 8. Revisar la primera ejecución
+## 9. Revisar la primera ejecución
 
 En SSMS, abrir **SQL Server Agent → Jobs → JS Industrial - Exportar contactos a Mantra → View History**. Revisar el TXT diario en `C:\Mantra\logs` y, en `BD_MANTRA`, consultar los envíos confirmados:
 

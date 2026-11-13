@@ -51,9 +51,25 @@ Primero copia `.env.example` a `.env` si todavía no existe. Git ignora el `.env
 python exportar_contactos.py --config config.example.json --json-file contactos_prueba.json --log-dir ./logs
 ```
 
-En Windows el comando es el mismo, usando `py` si así está instalado Python. Este modo no requiere SQL Server, `groupId` ni API key; valida los tres objetos de ejemplo y escribe el resultado en `./logs`. No llama a Mantra. El script rechaza `--apply` con cualquier `--json-file`, porque un envío real debe confirmar el resultado en SQL Server.
+En Windows el comando es el mismo, usando `py` si así está instalado Python. Este modo no requiere SQL Server, `groupId` ni API key; valida los tres objetos de ejemplo y escribe el resultado en `./logs`. No llama a Mantra. El archivo ficticio no se puede enviar con `--apply` porque no tiene los identificadores internos para confirmar el envío en SQL.
 
-Para inspeccionar pendientes en SQL Server, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05';`. Ese día se consideran cotizaciones anteriores al 3 de febrero. El resultado incluye `payload_json` e `ids_json`; puedes copiar `payload_json` a un archivo UTF-8 para probar la validación con `--json-file`. La ejecución real con `--apply` debe leer directamente del SP para registrar cada éxito y evitar reenvíos; no admite `--json-file`.
+Para inspeccionar pendientes en SQL Server, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05';`. Ese día se consideran cotizaciones anteriores al 3 de febrero. El resultado incluye `payload_json` e `ids_json`. Para guardarlos juntos en un archivo de prueba, usa `--export-json` como se indica abajo. La ejecución diaria sigue leyendo el SP directamente; el archivo manual también puede enviarse con `--apply` porque conserva ambos arreglos y confirma cada éxito en SQL.
+
+## Prueba manual: SP → archivo JSON → Mantra
+
+En la máquina Windows, primero ejecuta el SP en SSMS para revisar los pendientes: `EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;`. La columna `id_interno` permite elegir una cotización para una prueba limitada. El SP **devuelve** JSON; Python lo guarda como archivo para evitar copiar o truncar una celda larga de SSMS.
+
+Desde `mantra_integracion/`, con `config.json` y `.env` preparados:
+
+```powershell
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --export-json .\pendientes.local.json --codidtcot COD_INTERNO
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --json-file .\pendientes.local.json
+& "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --json-file .\pendientes.local.json --apply
+```
+
+Quita `--codidtcot COD_INTERNO` para exportar todos los pendientes. El archivo debe terminar en `.local.json`; Git lo ignora en esta carpeta porque contiene datos de contactos. La segunda línea valida sin llamar al API. La tercera crea o actualiza contactos reales en Mantra, comprueba otra vez que cada cotización siga pendiente y registra en `dbo.MantraExportaciones` cada HTTP 200/201. Si un contacto ya se envió, su oferta generó orden o sus datos cambiaron desde la exportación, se omite y se debe regenerar el archivo cuando corresponda.
+
+Las ocho columnas visibles en la captura tienen salida: `N° Cotización`→`custom_1`, `Fecha`→`custom_2`, `Cliente`→`custom_3`, `Vendedor`→`custom_5`, `Referencia`→`custom_7`, `Nombre del contacto`→`data.name`, `Teléfono`→`data.phone` y `Generó O/V`→`custom_13`. El backup solo trae el **código** del vendedor (`codmtrven`), no el nombre mostrado en el Excel; para enviar ese nombre hace falta el catálogo de vendedores. Las filas con teléfono ausente o inválido no entran al JSON. Las cotizaciones con `Generó O/V = true` tampoco entran porque ya se completaron.
 
 ## Variables de `.env`
 

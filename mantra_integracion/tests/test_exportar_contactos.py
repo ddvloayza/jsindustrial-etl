@@ -162,8 +162,73 @@ class ContactExportTests(unittest.TestCase):
     def test_sample_json_cannot_be_applied(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.config["log_dir"] = temporary
-            with self.assertRaisesRegex(ValueError, "debe leer el SP"):
+            with self.assertRaisesRegex(ValueError, "exportación manual con IDs"):
                 app.run(self.config, date(2026, 2, 2), True, ROOT / "contactos_prueba.json")
+
+    def test_export_json_keeps_contact_fields_and_sql_ids_separate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]) as fetch:
+                count = app.save_manual_export(self.config, date(2026, 2, 5), path, "COT0000001")
+            document = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(count, 1)
+            self.assertEqual(document["format"], app.MANUAL_EXPORT_FORMAT)
+            self.assertEqual(set(document["contacts"][0]), set(app.ALL_JSON_FIELDS))
+            self.assertEqual(document["ids"], [{"codidtcot": "COT0000001", "telefono": "987549210"}])
+            fetch.assert_called_once_with(self.config, date(2026, 2, 5), "COT0000001")
+
+    def test_manual_json_apply_rechecks_and_confirms(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            self.config["log_dir"] = temporary
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]):
+                app.save_manual_export(self.config, date(2026, 2, 5), path)
+            response = Mock(status_code=201)
+            response.json.return_value = {"resultOp": "created"}
+            with patch.dict(app.os.environ, {"MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"}), \
+                    patch.object(app, "fetch_rows", return_value=[selected]) as fetch, \
+                    patch.object(app, "post", return_value=response) as request, \
+                    patch.object(app, "confirm_sent") as confirm:
+                summary = app.run(self.config, date(2026, 2, 5), True, path)
+            self.assertEqual(summary["contactos_ok"], 1)
+            self.assertEqual(summary["omitidos"], 0)
+            self.assertEqual(len(fetch.call_args.args), 2)
+            self.assertEqual(request.call_args.args[2]["data"]["phone"], "987549210")
+            confirm.assert_called_once_with(self.config, "COT0000001", "987549210", 201)
+
+    def test_manual_json_skips_contact_no_longer_pending(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            self.config["log_dir"] = temporary
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]):
+                app.save_manual_export(self.config, date(2026, 2, 5), path)
+            with patch.dict(app.os.environ, {"MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"}), \
+                    patch.object(app, "fetch_rows", return_value=[]), \
+                    patch.object(app, "post") as request, patch.object(app, "confirm_sent") as confirm:
+                summary = app.run(self.config, date(2026, 2, 5), True, path)
+            self.assertEqual(summary["omitidos"], 1)
+            self.assertEqual(summary["contactos_ok"], 0)
+            request.assert_not_called()
+            confirm.assert_not_called()
+
+    def test_manual_json_skips_contact_changed_after_export(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            self.config["log_dir"] = temporary
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]):
+                app.save_manual_export(self.config, date(2026, 2, 5), path)
+            changed = {**selected, "referencia": "Referencia modificada"}
+            with patch.dict(app.os.environ, {"MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"}), \
+                    patch.object(app, "fetch_rows", return_value=[changed]), \
+                    patch.object(app, "post") as request, patch.object(app, "confirm_sent") as confirm:
+                summary = app.run(self.config, date(2026, 2, 5), True, path)
+            self.assertEqual(summary["omitidos"], 1)
+            request.assert_not_called()
+            confirm.assert_not_called()
 
 
 if __name__ == "__main__":

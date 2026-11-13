@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 
 
 BASE_URL = "https://wbpback.mantra.chat"
+MANUAL_EXPORT_FORMAT = "mantra-export-v1"
 ALL_JSON_FIELDS = [
     "numero_cotizacion", "fecha", "cliente", "condicion_venta", "vendedor",
     "fuente_contacto", "referencia", "moneda", "total_documento",
@@ -141,15 +142,34 @@ def parse_contacts_json(payload: str) -> list[dict]:
     return rows
 
 
-def fetch_rows(config: dict, run_date: date) -> list[dict]:
+def attach_ids(contacts: list[dict], ids: object) -> list[dict]:
+    if not isinstance(ids, list) or len(ids) != len(contacts):
+        raise RuntimeError("Los IDs internos no coinciden con los contactos")
+    seen = set()
+    for contact, item in zip(contacts, ids):
+        key = item.get("codidtcot") if isinstance(item, dict) else None
+        phone = item.get("telefono") if isinstance(item, dict) else None
+        if (not isinstance(key, str) or not key.strip()
+                or not isinstance(phone, str) or not re.fullmatch(r"9\d{8}", phone)
+                or phone in seen):
+            raise RuntimeError("El SP devolvió un ID o teléfono inválido o duplicado")
+        seen.add(phone)
+        contact["_codidtcot"] = key
+        contact["_telefono_normalizado"] = phone
+    return contacts
+
+
+def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None) -> list[dict]:
     connection = connect_sql(config, query_timeout=120)
     try:
         cursor = connection.cursor()
         placeholder = sql_placeholder(config)
-        cursor.execute(
-            f"EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1",
-            (run_date,),
-        )
+        query = f"EXEC dbo.usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1"
+        params: tuple = (run_date,)
+        if codidtcot is not None:
+            query += f", @Codidtcot={placeholder}"
+            params += (codidtcot,)
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         if rows and not isinstance(rows[0], dict):
             columns = [column[0] for column in cursor.description]
@@ -157,23 +177,44 @@ def fetch_rows(config: dict, run_date: date) -> list[dict]:
         if len(rows) != 1 or not {"payload_json", "ids_json"} <= set(rows[0]):
             raise RuntimeError("El SP debe devolver payload_json e ids_json")
         contacts = parse_contacts_json(rows[0]["payload_json"])
-        ids = json.loads(rows[0]["ids_json"])
-        if not isinstance(ids, list) or len(ids) != len(contacts):
-            raise RuntimeError("Los IDs internos no coinciden con los contactos")
-        seen = set()
-        for contact, item in zip(contacts, ids):
-            key = item.get("codidtcot") if isinstance(item, dict) else None
-            phone = item.get("telefono") if isinstance(item, dict) else None
-            if (not isinstance(key, str) or not key.strip()
-                    or not isinstance(phone, str) or not re.fullmatch(r"9\d{8}", phone)
-                    or phone in seen):
-                raise RuntimeError("El SP devolvió un ID o teléfono inválido o duplicado")
-            seen.add(phone)
-            contact["_codidtcot"] = key
-            contact["_telefono_normalizado"] = phone
-        return contacts
+        return attach_ids(contacts, json.loads(rows[0]["ids_json"]))
     finally:
         connection.close()
+
+
+def save_manual_export(config: dict, run_date: date, path: Path, codidtcot: str | None = None) -> int:
+    if not path.name.endswith(".local.json"):
+        raise ValueError("El archivo de exportación debe terminar en .local.json para no subir datos a Git")
+    rows = fetch_rows(config, run_date, codidtcot)
+    document = {
+        "format": MANUAL_EXPORT_FORMAT,
+        "fecha_proceso": run_date.isoformat(),
+        "contacts": [{field: row[field] for field in ALL_JSON_FIELDS} for row in rows],
+        "ids": [{"codidtcot": row["_codidtcot"], "telefono": row["_telefono_normalizado"]}
+                for row in rows],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return len(rows)
+
+
+def load_manual_export(path: Path) -> tuple[list[dict], bool]:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise ValueError("El archivo no contiene JSON válido") from exc
+    if isinstance(document, list):
+        return parse_contacts_json(json.dumps(document, ensure_ascii=False)), False
+    if not isinstance(document, dict) or document.get("format") != MANUAL_EXPORT_FORMAT:
+        raise ValueError("El archivo no es una exportación manual del SP")
+    if set(document) != {"format", "fecha_proceso", "contacts", "ids"}:
+        raise ValueError("La exportación manual tiene propiedades faltantes o adicionales")
+    try:
+        date.fromisoformat(document["fecha_proceso"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Fecha de exportación inválida") from exc
+    contacts = parse_contacts_json(json.dumps(document["contacts"], ensure_ascii=False))
+    return attach_ids(contacts, document["ids"]), True
 
 
 def confirm_sent(config: dict, codidtcot: str, phone: str, http_status: int) -> None:
@@ -231,18 +272,38 @@ def response_detail(response: requests.Response) -> str:
 
 
 def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None) -> dict:
-    if apply_changes and json_file:
-        raise ValueError("El envío real debe leer el SP para registrar los éxitos y evitar reenvíos")
-    rows = parse_contacts_json(json_file.read_text(encoding="utf-8")) if json_file else fetch_rows(config, run_date)
+    from_manual_export = False
+    if json_file:
+        rows, from_manual_export = load_manual_export(json_file)
+        if apply_changes and not from_manual_export:
+            raise ValueError("Para enviar un archivo se requiere una exportación manual con IDs del SP")
+    else:
+        rows = fetch_rows(config, run_date)
     log_dir = Path(config["log_dir"])
-    summary = {"seleccionados": len(rows), "contactos_ok": 0, "errores": 0}
+    summary = {"seleccionados": len(rows), "contactos_ok": 0, "omitidos": 0, "errores": 0}
     group_id = os.getenv("MANTRA_GROUP_ID")
     api_key = os.getenv("MANTRA_API_KEY")
     if apply_changes and (not group_id or not api_key):
         raise ValueError("Faltan MANTRA_GROUP_ID o MANTRA_API_KEY")
+    current_by_id = {}
+    if apply_changes and from_manual_export:
+        current_rows = fetch_rows(config, datetime.now(ZoneInfo("America/Lima")).date())
+        current_by_id = {row["_codidtcot"]: row for row in current_rows}
     session = requests.Session()
     for row in rows:
         lead_id = value_as_text(row.get("numero_cotizacion")) or "SIN_ID"
+        if apply_changes and from_manual_export:
+            current = current_by_id.get(row["_codidtcot"])
+            if current is None or current["_telefono_normalizado"] != row["_telefono_normalizado"]:
+                summary["omitidos"] += 1
+                append_log(log_dir, lead_id, "vigencia", "OMITIDO",
+                           detail="La cotización ya no está pendiente; no se envió")
+                continue
+            if any(current[field] != row[field] for field in ALL_JSON_FIELDS):
+                summary["omitidos"] += 1
+                append_log(log_dir, lead_id, "vigencia", "OMITIDO",
+                           detail="Los datos cambiaron; regenerar el JSON antes del envío")
+                continue
         try:
             phone, data = build_contact(row, config)
             if apply_changes and phone != row["_telefono_normalizado"]:
@@ -286,6 +347,8 @@ def main() -> int:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--fecha", type=date.fromisoformat, help="Fecha de ejecución, AAAA-MM-DD; por defecto hoy en Lima")
     parser.add_argument("--json-file", type=Path, help="Lee contactos desde un JSON local en vez del SP")
+    parser.add_argument("--export-json", type=Path, help="Consulta el SP y guarda un archivo .local.json para envío manual")
+    parser.add_argument("--codidtcot", help="Limita --export-json a una cotización interna para la prueba")
     parser.add_argument("--log-dir", type=Path, help="Carpeta de logs para esta ejecución")
     parser.add_argument("--apply", action="store_true", help="Crea/actualiza contactos reales en Mantra")
     args = parser.parse_args()
@@ -293,6 +356,15 @@ def main() -> int:
     if args.log_dir:
         config["log_dir"] = str(args.log_dir)
     run_date = args.fecha or datetime.now(ZoneInfo("America/Lima")).date()
+    if args.export_json:
+        if args.json_file or args.apply:
+            parser.error("--export-json no se combina con --json-file ni --apply")
+        count = save_manual_export(config, run_date, args.export_json, args.codidtcot)
+        print(json.dumps({"fecha": run_date.isoformat(), "modo": "EXPORTAR_JSON",
+                          "seleccionados": count, "archivo": str(args.export_json)}, ensure_ascii=False))
+        return 0
+    if args.codidtcot:
+        parser.error("--codidtcot solo se usa con --export-json")
     summary = run(config, run_date, args.apply, args.json_file)
     print(json.dumps({"fecha": run_date.isoformat(), "modo": "APLICAR" if args.apply else "DRY_RUN", **summary}, ensure_ascii=False))
     return 1 if summary["errores"] else 0
