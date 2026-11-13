@@ -39,7 +39,8 @@ CREATE OR ALTER PROCEDURE dbo.usp_ExportarCotizacionesMantra
     @FechaHasta date = NULL,
     @Codidtcot char(10) = NULL,
     @ComoJson bit = 1,
-    @FechaProceso date = NULL
+    @FechaProceso date = NULL,
+    @MaxContactos int = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -48,6 +49,9 @@ BEGIN
 
     IF @FechaDesde IS NOT NULL AND @FechaHasta IS NOT NULL AND @FechaDesde > @FechaHasta
         THROW 50001, 'FechaDesde no puede ser mayor que FechaHasta.', 1;
+
+    IF @MaxContactos IS NOT NULL AND @MaxContactos < 1
+        THROW 50004, 'MaxContactos debe ser mayor que cero.', 1;
 
     SELECT
         c.codidtcot AS id_interno,
@@ -123,6 +127,15 @@ BEGIN
           WHERE e.telefono = tel.normalizado
       );
 
+    -- Limitar después de filtrar y elegir una cotización por teléfono.
+    -- Sin límite se mantienen todos los pendientes, en orden de antigüedad.
+    DECLARE @Limite int = COALESCE(@MaxContactos, 2147483647);
+    SELECT TOP (@Limite) *
+    INTO #ContactosSeleccionados
+    FROM #CotizacionesMantra
+    WHERE fila_telefono = 1
+    ORDER BY [Fecha], [N° Cotización], id_interno;
+
     IF @ComoJson = 1
         SELECT COALESCE((
             SELECT
@@ -149,8 +162,7 @@ BEGIN
                 [Nombre del contacto] AS nombre_contacto,
                 [Telefono] AS telefono,
                 [email] AS email
-            FROM #CotizacionesMantra
-            WHERE fila_telefono = 1
+            FROM #ContactosSeleccionados
             ORDER BY [Fecha], [N° Cotización], id_interno
             FOR JSON PATH, INCLUDE_NULL_VALUES
         ), N'[]') AS payload_json,
@@ -158,15 +170,13 @@ BEGIN
         -- No forman parte de los 23 campos del contacto ni se envían al API.
         COALESCE((
             SELECT id_interno AS codidtcot, telefono_normalizado AS telefono
-            FROM #CotizacionesMantra
-            WHERE fila_telefono = 1
+            FROM #ContactosSeleccionados
             ORDER BY [Fecha], [N° Cotización], id_interno
             FOR JSON PATH
         ), N'[]') AS ids_json;
     ELSE
-        SELECT * FROM #CotizacionesMantra
-        WHERE fila_telefono = 1
-        ORDER BY [Fecha], [N° Cotización];
+        SELECT * FROM #ContactosSeleccionados
+        ORDER BY [Fecha], [N° Cotización], id_interno;
 END;
 GO
 

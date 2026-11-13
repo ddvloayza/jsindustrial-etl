@@ -159,7 +159,8 @@ def attach_ids(contacts: list[dict], ids: object) -> list[dict]:
     return contacts
 
 
-def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None) -> list[dict]:
+def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None,
+               limit: int | None = None) -> list[dict]:
     connection = connect_sql(config, query_timeout=120)
     try:
         cursor = connection.cursor()
@@ -169,6 +170,9 @@ def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None) -> li
         if codidtcot is not None:
             query += f", @Codidtcot={placeholder}"
             params += (codidtcot,)
+        if limit is not None:
+            query += f", @MaxContactos={placeholder}"
+            params += (limit,)
         cursor.execute(query, params)
         rows = cursor.fetchall()
         if rows and not isinstance(rows[0], dict):
@@ -182,10 +186,12 @@ def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None) -> li
         connection.close()
 
 
-def save_manual_export(config: dict, run_date: date, path: Path, codidtcot: str | None = None) -> int:
+def save_manual_export(config: dict, run_date: date, path: Path, codidtcot: str | None = None,
+                       limit: int | None = None) -> int:
     if not path.name.endswith(".local.json"):
         raise ValueError("El archivo de exportación debe terminar en .local.json para no subir datos a Git")
-    rows = fetch_rows(config, run_date, codidtcot)
+    limit_arg = {"limit": limit} if limit is not None else {}
+    rows = fetch_rows(config, run_date, codidtcot, **limit_arg)
     document = {
         "format": MANUAL_EXPORT_FORMAT,
         "fecha_proceso": run_date.isoformat(),
@@ -271,14 +277,16 @@ def response_detail(response: requests.Response) -> str:
     return "Respuesta sin detalle estructurado"
 
 
-def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None) -> dict:
+def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None,
+        limit: int | None = None) -> dict:
     from_manual_export = False
     if json_file:
         rows, from_manual_export = load_manual_export(json_file)
         if apply_changes and not from_manual_export:
             raise ValueError("Para enviar un archivo se requiere una exportación manual con IDs del SP")
     else:
-        rows = fetch_rows(config, run_date)
+        limit_arg = {"limit": limit} if limit is not None else {}
+        rows = fetch_rows(config, run_date, **limit_arg)
     log_dir = Path(config["log_dir"])
     summary = {"seleccionados": len(rows), "contactos_ok": 0, "omitidos": 0, "errores": 0}
     group_id = os.getenv("MANTRA_GROUP_ID")
@@ -349,9 +357,14 @@ def main() -> int:
     parser.add_argument("--json-file", type=Path, help="Lee contactos desde un JSON local en vez del SP")
     parser.add_argument("--export-json", type=Path, help="Consulta el SP y guarda un archivo .local.json para envío manual")
     parser.add_argument("--codidtcot", help="Limita --export-json a una cotización interna para la prueba")
+    parser.add_argument("--limit", type=int, help="Máximo de contactos pendientes para esta ejecución")
     parser.add_argument("--log-dir", type=Path, help="Carpeta de logs para esta ejecución")
     parser.add_argument("--apply", action="store_true", help="Crea/actualiza contactos reales en Mantra")
     args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit debe ser mayor que cero")
+    if args.json_file and args.limit is not None:
+        parser.error("--limit se usa al consultar el SP, no con --json-file")
     config = load_config(args.config)
     if args.log_dir:
         config["log_dir"] = str(args.log_dir)
@@ -359,13 +372,13 @@ def main() -> int:
     if args.export_json:
         if args.json_file or args.apply:
             parser.error("--export-json no se combina con --json-file ni --apply")
-        count = save_manual_export(config, run_date, args.export_json, args.codidtcot)
+        count = save_manual_export(config, run_date, args.export_json, args.codidtcot, args.limit)
         print(json.dumps({"fecha": run_date.isoformat(), "modo": "EXPORTAR_JSON",
                           "seleccionados": count, "archivo": str(args.export_json)}, ensure_ascii=False))
         return 0
     if args.codidtcot:
         parser.error("--codidtcot solo se usa con --export-json")
-    summary = run(config, run_date, args.apply, args.json_file)
+    summary = run(config, run_date, args.apply, args.json_file, args.limit)
     print(json.dumps({"fecha": run_date.isoformat(), "modo": "APLICAR" if args.apply else "DRY_RUN", **summary}, ensure_ascii=False))
     return 1 if summary["errores"] else 0
 

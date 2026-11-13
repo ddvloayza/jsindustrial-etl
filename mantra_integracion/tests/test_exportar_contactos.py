@@ -63,6 +63,27 @@ class ContactExportTests(unittest.TestCase):
         self.assertIn("@FechaProceso=%s", cursor.execute.call_args.args[0])
         connection.close.assert_called_once()
 
+    def test_sp_limit_is_passed_as_parameter(self):
+        cursor = Mock()
+        cursor.fetchall.return_value = [{"payload_json": "[]", "ids_json": "[]"}]
+        connection = Mock()
+        connection.cursor.return_value = cursor
+        with patch.object(app.pymssql, "connect", return_value=connection), patch.dict(
+            app.os.environ, {"MANTRA_SQL_USER": "test", "MANTRA_SQL_PASSWORD": "test"}
+        ):
+            self.assertEqual(app.fetch_rows(self.config, date(2026, 2, 5), limit=1), [])
+        query, values = cursor.execute.call_args.args
+        self.assertIn("@MaxContactos=%s", query)
+        self.assertEqual(values, (date(2026, 2, 5), 1))
+
+    def test_one_contact_dry_run_passes_limit_to_sp(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.config["log_dir"] = temporary
+            with patch.object(app, "fetch_rows", return_value=[]) as fetch:
+                summary = app.run(self.config, date(2026, 2, 5), False, limit=1)
+        self.assertEqual(summary["seleccionados"], 0)
+        fetch.assert_called_once_with(self.config, date(2026, 2, 5), limit=1)
+
     def test_sp_ids_must_match_contacts(self):
         cursor = Mock()
         cursor.fetchall.return_value = [{

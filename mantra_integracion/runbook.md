@@ -77,6 +77,21 @@ La salida debe indicar `"modo": "DRY_RUN"`, el número de contactos seleccionado
 
 La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
 
+Para probar **un solo contacto** con el mismo flujo del job, instalar primero la versión actual del SP (sección 2). El filtro está en `dbo.usp_ExportarCotizacionesMantra`, dentro del `WHERE` sobre `dbo.CotizacionesC`; `@MaxContactos` se aplica después de los filtros y de elegir una cotización por teléfono. En SSMS se puede inspeccionar el primero, ordenado del más antiguo al más reciente:
+
+```sql
+EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson = 0, @MaxContactos = 1;
+```
+
+Desde la carpeta `mantra_integracion`, probar primero sin envío y luego enviar ese único contacto:
+
+```powershell
+powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -Limit 1 -DryRun
+powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -Limit 1
+```
+
+La segunda línea crea o actualiza el contacto en Mantra y registra el éxito en `dbo.MantraExportaciones`. Sin `-Limit`, el lanzador y el job diario procesan todos los pendientes; no hay que editar de nuevo el SP. Revisar el resumen y el TXT en `C:\Mantra\logs` antes de ejecutar sin límite. Si el job ya está habilitado, su próxima ejecución también procesará todos los pendientes.
+
 ## 7. Prueba manual con archivo JSON
 
 Antes de programar el job, puedes probar el recorrido completo en la máquina virtual. En SSMS, ejecuta `EXEC dbo.usp_ExportarCotizacionesMantra @ComoJson=0;` para ver qué cotizaciones están pendientes. Si deseas probar una sola, anota su `id_interno`. El SP devuelve el JSON; el comando siguiente vuelve a ejecutarlo y **guarda** el resultado en un archivo sin copiarlo desde SSMS.
