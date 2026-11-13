@@ -1,7 +1,7 @@
 """Crea o actualiza contactos de SQL Server en Mantra. No envía mensajes.
 
-El SP entrega un arreglo JSON con 20 campos personalizados y los datos de contacto.
-El API guarda custom_1 a custom_20; nombre, teléfono y correo van aparte.
+El SP entrega el JSON completo; config.json selecciona los campos enviados al API.
+Nombre y teléfono son obligatorios; correo se configura por separado.
 """
 
 from __future__ import annotations
@@ -46,6 +46,8 @@ def load_config(path: Path) -> dict:
     allowed = {f"custom_{i}" for i in range(1, 21)}
     if set(custom) - allowed:
         raise ValueError("Solo se permiten custom_1 a custom_20")
+    if not isinstance(config.get("include_email", False), bool):
+        raise ValueError("include_email debe ser true o false")
     missing = set(custom.values()) - set(ALL_JSON_FIELDS)
     if missing:
         raise ValueError(f"Propiedades JSON del SP no reconocidas: {sorted(missing)}")
@@ -113,9 +115,10 @@ def build_contact(row: dict, config: dict) -> tuple[str, dict]:
     if not name:
         raise ValueError("Nombre de contacto y cliente ausentes")
     data = {"name": name, "phone": phone, "countryCode": country_code}
-    email = value_as_text(row.get("email"))
-    if email and "@" in email:
-        data["email"] = email
+    if config.get("include_email", False):
+        email = value_as_text(row.get("email"))
+        if email and "@" in email:
+            data["email"] = email
     for target, source in config.get("custom_fields", {}).items():
         value = value_as_text(row.get(source))
         if value is not None:

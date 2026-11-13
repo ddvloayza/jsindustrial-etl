@@ -22,25 +22,23 @@ class ContactExportTests(unittest.TestCase):
             "numero_cotizacion": "0001-0027924-1", "fecha": "2026-02-02",
             "cliente": "CLIENTE PRUEBA", "nombre_contacto": "MIGUEL MORALES",
             "telefono": "+51 987 549 210", "email": "miguel@example.com",
+            "vendedor": "VEN001", "referencia": "MANTENIMIENTO",
+            "genero_orden_venta": "-",
             "moneda": "US$", "total_documento": 100,
             "total_moneda_nacional": 375, "fecha_estimada_cierre": "2026-02-28",
         })
 
-    def test_phone_and_twenty_custom_fields(self):
+    def test_only_eight_requested_fields_are_sent(self):
         phone, data = app.build_contact(self.row, self.config)
         self.assertEqual(phone, "987549210")
         self.assertEqual(data["countryCode"], "51")
         self.assertEqual(data["name"], "MIGUEL MORALES")
         self.assertEqual(data["custom_1"], "0001-0027924-1")
-        self.assertEqual(data["custom_9"], "100")
-        self.assertEqual(data["custom_11"], "375")
-        self.assertEqual(data["custom_20"], "2026-02-28")
-        self.assertNotIn("custom_21", data)
-        all_values = {**self.row, **{
-            source: f"VALOR_{index}" for index, source in enumerate(self.config["custom_fields"].values(), 1)
-        }}
-        _, complete = app.build_contact(all_values, self.config)
-        self.assertEqual({key for key in complete if key.startswith("custom_")}, set(self.config["custom_fields"]))
+        self.assertEqual(data["custom_5"], "VEN001")
+        self.assertEqual(data["custom_7"], "MANTENIMIENTO")
+        self.assertEqual(data["custom_13"], "-")
+        self.assertEqual(set(data), {"name", "phone", "countryCode", *self.config["custom_fields"]})
+        self.assertNotIn("email", data)
 
     def test_invalid_phone_is_not_sent(self):
         self.row["telefono"] = "012345678"
@@ -131,7 +129,7 @@ class ContactExportTests(unittest.TestCase):
         self.assertEqual(values, ("COT0000001", "987549210", 201))
         connection.commit.assert_called_once()
 
-    def test_json_requires_twenty_custom_fields_and_contact_details(self):
+    def test_sp_json_requires_all_source_fields_and_contact_details(self):
         with self.assertRaisesRegex(ValueError, "le faltan propiedades"):
             app.parse_contacts_json('[{"telefono":"987549210"}]')
         with self.assertRaisesRegex(ValueError, "propiedades no exportables"):
@@ -151,7 +149,8 @@ class ContactExportTests(unittest.TestCase):
             self.assertEqual(summary["contactos_ok"], 1)
             self.assertEqual([c.args[1] for c in request.call_args_list], ["/contacts/new"])
             self.assertEqual(request.call_args_list[0].args[2]["data"]["phone"], "987549210")
-            self.assertEqual(request.call_args_list[0].args[2]["data"]["custom_20"], "2026-02-28")
+            self.assertEqual(request.call_args_list[0].args[2]["data"]["custom_13"], "-")
+            self.assertNotIn("email", request.call_args_list[0].args[2]["data"])
             confirm.assert_called_once_with(self.config, "COT0000001", "987549210", 201)
             self.assertIn("contacto", next(Path(temporary).glob("mantra_*.txt")).read_text())
 

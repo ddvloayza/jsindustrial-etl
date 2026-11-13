@@ -112,7 +112,7 @@ Desde `C:\Mantra\jsindustrial-etl\mantra_integracion`:
 & "C:\Mantra\venv\Scripts\python.exe" .\exportar_contactos.py --config .\config.json --json-file .\pendientes.local.json --apply
 ```
 
-Sustituye `COD_INTERNO` por el valor real o quita `--codidtcot COD_INTERNO` para exportar todos los pendientes. El archivo `.local.json` contiene los 23 datos de cada contacto y, aparte, los IDs necesarios para confirmar los envíos en SQL. La segunda línea es una simulación. La tercera usa `MANTRA_GROUP_ID` y `MANTRA_API_KEY` de `.env`, envía contactos reales y necesita la conexión SQL para comprobar que siguen pendientes y registrar los éxitos.
+Sustituye `COD_INTERNO` por el valor real o quita `--codidtcot COD_INTERNO` para exportar todos los pendientes. El archivo `.local.json` conserva las 23 propiedades de origen y, aparte, los IDs necesarios para confirmar los envíos en SQL. Python envía a Mantra solo los ocho campos activos de `config.json`. La segunda línea es una simulación. La tercera usa `MANTRA_GROUP_ID` y `MANTRA_API_KEY` de `.env`, envía contactos reales y necesita la conexión SQL para comprobar que siguen pendientes y registrar los éxitos.
 
 En la captura entregada, los ocho campos visibles están contemplados. Hay dos diferencias que revisar con datos reales: `Vendedor` sale como código (`codmtrven`) porque el backup no incluye su catálogo de nombres, y las filas sin teléfono válido quedan fuera. `Generó O/V = true` también queda fuera por ser una cotización ya completada.
 

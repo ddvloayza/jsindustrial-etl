@@ -8,26 +8,13 @@
   },
   "log_dir": "C:\\Mantra\\logs",
   "country_code": "51",
+  "include_email": false,
   "custom_fields": {
     "custom_1": "numero_cotizacion",
     "custom_2": "fecha",
     "custom_3": "cliente",
-    "custom_4": "condicion_venta",
     "custom_5": "vendedor",
-    "custom_6": "fuente_contacto",
     "custom_7": "referencia",
-    "custom_8": "moneda",
-    "custom_9": "total_documento",
-    "custom_10": "estado_oferta",
-    "custom_11": "total_moneda_nacional",
-    "custom_12": "tasa_exito_cierre",
-    "custom_13": "genero_orden_venta",
-    "custom_14": "comentario",
-    "custom_15": "usuario",
-    "custom_16": "cargo",
-    "custom_17": "area",
-    "custom_18": "inventario_disponible",
-    "custom_19": "porcentaje_inventario_disponible",
-    "custom_20": "fecha_estimada_cierre"
+    "custom_13": "genero_orden_venta"
   }
 }
