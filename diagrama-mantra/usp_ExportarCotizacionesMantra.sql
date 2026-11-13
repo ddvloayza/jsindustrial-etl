@@ -69,8 +69,9 @@ BEGIN
             CASE WHEN doc.serie IS NOT NULL AND doc.numero IS NOT NULL
                  THEN CONCAT(doc.serie, '-', doc.numero,
                      CASE WHEN doc.revision IS NULL OR doc.revision = '00' THEN ''
-                          WHEN TRY_CONVERT(int, doc.revision) IS NOT NULL
-                          THEN CONCAT('-', TRY_CONVERT(int, doc.revision))
+                          -- txtnrorev es char(2): 01..09 se muestran como 1..9.
+                          WHEN doc.revision LIKE '0[1-9]'
+                          THEN CONCAT('-', RIGHT(doc.revision, 1))
                           ELSE CONCAT('-', doc.revision) END)
                  ELSE NULL END,
             LTRIM(RTRIM(c.codidtcot))
