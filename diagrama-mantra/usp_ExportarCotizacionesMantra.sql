@@ -1,3 +1,6 @@
+USE [JSIndustrial];
+GO
+
 /*
   Exportación de contactos basada en "Cotizaciones Generales Prueba.xlsx".
   Fuente disponible: dbo.CotizacionesC del backup BD_MANTRA.bak.

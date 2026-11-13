@@ -27,7 +27,15 @@ Si el servidor no tiene acceso SSH a GitHub, copiar allí el repositorio por un 
 
 ## 3. Instalar el SQL de la integración
 
-En SQL Server Management Studio (SSMS), seleccionar la base real **`BD_MANTRA`** y ejecutar completo [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql). No ejecutarlo en `master` ni en `msdb`.
+En SQL Server Management Studio (SSMS), abrir y ejecutar completo [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql). El archivo usa explícitamente **`JSIndustrial`**; ahí debe existir `dbo.CotizacionesC`. Antes de instalar, comprobarlo con:
+
+```sql
+USE [JSIndustrial];
+GO
+SELECT DB_NAME() AS base_actual,
+       CASE WHEN OBJECT_ID(N'dbo.CotizacionesC', N'U') IS NOT NULL
+            THEN 'SI' ELSE 'NO' END AS tabla_cotizaciones_existe;
+```
 
 El archivo crea `dbo.JS_MantraExportaciones`, `dbo.fn_NormalizarTelefonoMantra`, `dbo.JS_usp_ExportarCotizacionesMantra` y `dbo.JS_usp_ConfirmarExportacionMantra`. El primer SP devuelve los contactos pendientes; el segundo registra un teléfono solo después de que Mantra responda HTTP 200 o 201.
 
@@ -60,10 +68,10 @@ El administrador debe crear o elegir una cuenta de Windows con permisos para:
 
 1. Ejecutar `C:\Mantra\venv\Scripts\python.exe` y leer el proyecto, incluido `.env`.
 2. Escribir en `C:\Mantra\logs`.
-3. Conectarse a `BD_MANTRA` con autenticación de Windows y ejecutar ambos SP.
+3. Conectarse a `JSIndustrial` con autenticación de Windows y ejecutar ambos SP.
 4. Acceder al endpoint de Mantra por HTTPS.
 
-En SSMS, crear una **Credential** para esa cuenta y un proxy de SQL Server Agent llamado `MantraCmdExecProxy`, habilitado para el subsistema **Operating System (CmdExec)**. El proxy no concede automáticamente permisos dentro de `BD_MANTRA`: el administrador debe crear o asignar el login/usuario de Windows y otorgarle `EXECUTE` sobre los dos SP. [Procedimiento de Microsoft para crear un proxy](https://learn.microsoft.com/en-us/sql/ssms/agent/create-a-sql-server-agent-proxy).
+En SSMS, crear una **Credential** para esa cuenta y un proxy de SQL Server Agent llamado `MantraCmdExecProxy`, habilitado para el subsistema **Operating System (CmdExec)**. El proxy no concede automáticamente permisos dentro de `JSIndustrial`: el administrador debe crear o asignar el login/usuario de Windows y otorgarle `EXECUTE` sobre los dos SP. [Procedimiento de Microsoft para crear un proxy](https://learn.microsoft.com/en-us/sql/ssms/agent/create-a-sql-server-agent-proxy).
 
 ## 6. Probar sin enviar contactos
 
@@ -123,7 +131,7 @@ Con los valores revisados, ejecutar el archivo en SSMS. El script usa `msdb`, cr
 
 ## 9. Revisar la primera ejecución
 
-En SSMS, abrir **SQL Server Agent → Jobs → JS Industrial - Exportar contactos a Mantra → View History**. Revisar el TXT diario en `C:\Mantra\logs` y, en `BD_MANTRA`, consultar los envíos confirmados:
+En SSMS, abrir **SQL Server Agent → Jobs → JS Industrial - Exportar contactos a Mantra → View History**. Revisar el TXT diario en `C:\Mantra\logs` y, en `JSIndustrial`, consultar los envíos confirmados:
 
 ```sql
 SELECT TOP (20) telefono, codidtcot, fecha_envio, http_status

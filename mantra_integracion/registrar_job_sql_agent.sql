@@ -1,7 +1,7 @@
 /*
   Ejecutar una vez en el SQL Server de producción mediante SSMS como administrador.
   Antes: crear un proxy de SQL Server Agent para CmdExec con una cuenta de Windows
-  que pueda leer el código y .env, ejecutar Python y conectarse a BD_MANTRA.
+  que pueda leer el código y .env, ejecutar Python y conectarse a JSIndustrial.
   Editar @ProxyName, @Launcher, @PythonExe y @HoraHHMMSS. No poner claves aquí.
   El horario usa la zona horaria LOCAL del servidor SQL Server Agent.
 */

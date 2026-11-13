@@ -2,7 +2,7 @@
   "sql": {
     "server": "SERVIDOR_SQL",
     "port": 1433,
-    "database": "BD_MANTRA",
+    "database": "JSIndustrial",
     "authentication": "windows",
     "odbc_driver": "ODBC Driver 18 for SQL Server"
   },

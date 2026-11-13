@@ -87,8 +87,8 @@ Para pruebas fuera de ese servidor, se conserva el modo opcional `sql.authentica
 ## Preparación en Windows
 
 1. En el servidor Windows que ejecuta SQL Server Agent, instalar Python 3.10+, las dependencias de `requirements.txt` y Microsoft ODBC Driver 18 for SQL Server. La conexión integrada exige que la cuenta del job tenga acceso al servidor SQL y que su certificado TLS sea confiable para ODBC.
-2. Ejecutar todo el SQL de `../diagrama-mantra/usp_ExportarCotizacionesMantra.sql` en la base real. Crea `dbo.JS_MantraExportaciones`, una función de normalización de teléfono y dos SP.
-3. Copiar `config.example.json` a `config.json` y definir servidor, base y carpeta de logs. Mantener `"authentication": "windows"`. `config.json` todavía no está creado en esta copia del proyecto.
+2. Ejecutar todo el SQL de `../diagrama-mantra/usp_ExportarCotizacionesMantra.sql` en `JSIndustrial`. Crea `dbo.JS_MantraExportaciones`, una función de normalización de teléfono y dos SP. El archivo establece `USE [JSIndustrial]`.
+3. Copiar `config.example.json` a `config.json` y definir servidor y carpeta de logs. La base ya figura como `JSIndustrial`; mantener `"authentication": "windows"`. `config.json` todavía no está creado en esta copia del proyecto.
 4. Completar solo `MANTRA_GROUP_ID` y `MANTRA_API_KEY` en `.env`. Dar acceso de lectura a ese archivo únicamente a la cuenta que ejecutará el job. No guardar secretos en `config.json`, el repositorio o el TXT.
 5. Probar sin modificar Mantra: `powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -Limit 1 -DryRun`. Revisar el TXT y el conteo de contactos pendientes. En SSMS, `EXEC dbo.JS_usp_ExportarCotizacionesMantra @ComoJson=0, @MaxContactos=1;` muestra el primero. El límite se aplica después de los filtros y la deduplicación por teléfono.
 6. Tras confirmar el mapeo y la regla, ejecutar una prueba de un contacto con `powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -Limit 1`. Revisar el TXT y `dbo.JS_MantraExportaciones` para comprobar qué teléfono se confirmó. Quitar `-Limit 1` para procesar todos los pendientes; el job diario no lleva límite.
