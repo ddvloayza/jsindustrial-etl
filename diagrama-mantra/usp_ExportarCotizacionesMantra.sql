@@ -7,13 +7,22 @@
   sin orden de venta generada y sin envío exitoso registrado para el teléfono.
   El integrador confirma cada éxito mediante usp_ConfirmarExportacionMantra.
 */
-IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NULL
+-- Si ya se instaló la versión anterior, conservar su historial al renombrarla.
+IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NOT NULL
+   AND OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NOT NULL
+    THROW 50005, 'Existen ambas tablas de exportaciones; revisar el historial antes de instalar.', 1;
+
+IF OBJECT_ID(N'dbo.MantraExportaciones', N'U') IS NOT NULL
+    EXEC sys.sp_rename N'dbo.MantraExportaciones', N'JS_MantraExportaciones', N'OBJECT';
+GO
+
+IF OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.MantraExportaciones (
+    CREATE TABLE dbo.JS_MantraExportaciones (
         telefono char(9) NOT NULL PRIMARY KEY,
         codidtcot char(10) NOT NULL,
         fecha_envio datetime2(0) NOT NULL
-            CONSTRAINT DF_MantraExportaciones_fecha_envio DEFAULT SYSDATETIME(),
+            CONSTRAINT DF_JS_MantraExportaciones_fecha_envio DEFAULT SYSDATETIME(),
         http_status smallint NOT NULL
     );
 END;
@@ -123,7 +132,7 @@ BEGIN
       AND c.numpedgen = 0
       AND tel.normalizado IS NOT NULL
       AND NOT EXISTS (
-          SELECT 1 FROM dbo.MantraExportaciones AS e
+          SELECT 1 FROM dbo.JS_MantraExportaciones AS e
           WHERE e.telefono = tel.normalizado
       );
 
@@ -196,10 +205,10 @@ BEGIN
 
     BEGIN TRANSACTION;
     IF NOT EXISTS (
-        SELECT 1 FROM dbo.MantraExportaciones WITH (UPDLOCK, HOLDLOCK)
+        SELECT 1 FROM dbo.JS_MantraExportaciones WITH (UPDLOCK, HOLDLOCK)
         WHERE telefono = @Telefono
     )
-        INSERT dbo.MantraExportaciones (telefono, codidtcot, http_status)
+        INSERT dbo.JS_MantraExportaciones (telefono, codidtcot, http_status)
         VALUES (@Telefono, @Codidtcot, @HttpStatus);
     COMMIT TRANSACTION;
 END;

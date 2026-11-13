@@ -29,7 +29,7 @@ Si el servidor no tiene acceso SSH a GitHub, copiar allí el repositorio por un 
 
 En SQL Server Management Studio (SSMS), seleccionar la base real **`BD_MANTRA`** y ejecutar completo [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql). No ejecutarlo en `master` ni en `msdb`.
 
-El archivo crea `dbo.MantraExportaciones`, `dbo.fn_NormalizarTelefonoMantra`, `dbo.usp_ExportarCotizacionesMantra` y `dbo.usp_ConfirmarExportacionMantra`. El primer SP devuelve los contactos pendientes; el segundo registra un teléfono solo después de que Mantra responda HTTP 200 o 201.
+El archivo crea `dbo.JS_MantraExportaciones`, `dbo.fn_NormalizarTelefonoMantra`, `dbo.usp_ExportarCotizacionesMantra` y `dbo.usp_ConfirmarExportacionMantra`. Si existe la tabla de la versión anterior, la renombra y conserva su historial. El primer SP devuelve los contactos pendientes; el segundo registra un teléfono solo después de que Mantra responda HTTP 200 o 201.
 
 ## 4. Crear los archivos locales de configuración
 
@@ -75,7 +75,7 @@ powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe"
 
 La salida debe indicar `"modo": "DRY_RUN"`, el número de contactos seleccionados y los errores. Revisar además el TXT en `C:\Mantra\logs`. Este comando consulta el SP y valida los contactos, **sin llamar al API de Mantra ni registrar envíos**. Si se prueba desde una cuenta distinta de la cuenta proxy, el administrador debe verificar también los permisos de esta última.
 
-La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
+La selección considera cotizaciones de más de dos días completos, excluye `genero_orden_venta = true` y los teléfonos ya registrados en `dbo.JS_MantraExportaciones`. El JSON del SP muestra `telefono` con nueve dígitos, sin `+51`; Mantra recibe el código de país por separado. Antes del primer envío real, revisar el número de pendientes y el mapeo de campos en [`mapeo_campos_mantra.csv`](mapeo_campos_mantra.csv).
 
 Para probar **un solo contacto** con el mismo flujo del job, instalar primero la versión actual del SP (sección 2). El filtro está en `dbo.usp_ExportarCotizacionesMantra`, dentro del `WHERE` sobre `dbo.CotizacionesC`; `@MaxContactos` se aplica después de los filtros y de elegir una cotización por teléfono. En SSMS se puede inspeccionar el primero, ordenado del más antiguo al más reciente:
 
@@ -90,7 +90,7 @@ powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe"
 powershell -File .\run_mantra.ps1 -PythonExe "C:\Mantra\venv\Scripts\python.exe" -Limit 1
 ```
 
-La segunda línea crea o actualiza el contacto en Mantra y registra el éxito en `dbo.MantraExportaciones`. Sin `-Limit`, el lanzador y el job diario procesan todos los pendientes; no hay que editar de nuevo el SP. Revisar el resumen y el TXT en `C:\Mantra\logs` antes de ejecutar sin límite. Si el job ya está habilitado, su próxima ejecución también procesará todos los pendientes.
+La segunda línea crea o actualiza el contacto en Mantra y registra el éxito en `dbo.JS_MantraExportaciones`. Sin `-Limit`, el lanzador y el job diario procesan todos los pendientes; no hay que editar de nuevo el SP. Revisar el resumen y el TXT en `C:\Mantra\logs` antes de ejecutar sin límite. Si el job ya está habilitado, su próxima ejecución también procesará todos los pendientes.
 
 ## 7. Prueba manual con archivo JSON
 
@@ -127,7 +127,7 @@ En SSMS, abrir **SQL Server Agent → Jobs → JS Industrial - Exportar contacto
 
 ```sql
 SELECT TOP (20) telefono, codidtcot, fecha_envio, http_status
-FROM dbo.MantraExportaciones
+FROM dbo.JS_MantraExportaciones
 ORDER BY fecha_envio DESC;
 ```
 
