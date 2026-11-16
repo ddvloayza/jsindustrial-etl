@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import sqlite3
 import sys
 import time
 from datetime import date, datetime
@@ -203,7 +204,9 @@ def save_manual_export(config: dict, run_date: date, path: Path, codidtcot: str 
                 for row in rows],
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
     return len(rows)
 
 
@@ -281,7 +284,7 @@ def response_detail(response: requests.Response) -> str:
 
 
 def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | None = None,
-        limit: int | None = None) -> dict:
+        limit: int | None = None, offline: bool = False) -> dict:
     from_manual_export = False
     if json_file:
         rows, from_manual_export = load_manual_export(json_file)
@@ -297,13 +300,24 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
     if apply_changes and (not group_id or not api_key):
         raise ValueError("Faltan MANTRA_GROUP_ID o MANTRA_API_KEY")
     current_by_id = {}
-    if apply_changes and from_manual_export:
+    if apply_changes and from_manual_export and not offline:
         current_rows = fetch_rows(config, datetime.now(ZoneInfo("America/Lima")).date())
         current_by_id = {row["_codidtcot"]: row for row in current_rows}
+    ledger = None
+    if offline:
+        ledger_path = Path(config["ledger_path"])
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        ledger = sqlite3.connect(ledger_path, timeout=30)
+        ledger.execute("CREATE TABLE IF NOT EXISTS enviados (telefono TEXT PRIMARY KEY, codidtcot TEXT NOT NULL, fecha_envio TEXT NOT NULL, http_status INTEGER NOT NULL)")
+        ledger.commit()
     session = requests.Session()
     for row in rows:
         lead_id = value_as_text(row.get("numero_cotizacion")) or "SIN_ID"
-        if apply_changes and from_manual_export:
+        if ledger is not None and ledger.execute("SELECT 1 FROM enviados WHERE telefono=?", (row["_telefono_normalizado"],)).fetchone():
+            summary["omitidos"] += 1
+            append_log(log_dir, lead_id, "contacto", "OMITIDO", detail="Teléfono ya enviado según registro local")
+            continue
+        if apply_changes and from_manual_export and not offline:
             current = current_by_id.get(row["_codidtcot"])
             if current is None or current["_telefono_normalizado"] != row["_telefono_normalizado"]:
                 summary["omitidos"] += 1
@@ -340,15 +354,22 @@ def run(config: dict, run_date: date, apply_changes: bool, json_file: Path | Non
                 break
             continue
         try:
-            confirm_sent(config, row["_codidtcot"], phone, contact_response.status_code)
-        except (pymssql.Error, pyodbc.Error, KeyError, OSError) as exc:
+            if ledger is not None:
+                ledger.execute("INSERT OR IGNORE INTO enviados VALUES (?, ?, ?, ?)",
+                               (phone, row["_codidtcot"], datetime.now(ZoneInfo("America/Lima")).isoformat(), contact_response.status_code))
+                ledger.commit()
+            else:
+                confirm_sent(config, row["_codidtcot"], phone, contact_response.status_code)
+        except (pymssql.Error, pyodbc.Error, sqlite3.Error, KeyError, OSError) as exc:
             summary["errores"] += 1
-            append_log(log_dir, lead_id, "confirmacion_sql", "ERROR", contact_response.status_code,
-                       f"Mantra aceptó el contacto, pero SQL no confirmó: {type(exc).__name__}")
+            append_log(log_dir, lead_id, "confirmacion", "ERROR", contact_response.status_code,
+                       f"Mantra aceptó el contacto, pero no se registró el éxito: {type(exc).__name__}")
             continue
         summary["contactos_ok"] += 1
         append_log(log_dir, lead_id, "contacto", "OK", contact_response.status_code, response_detail(contact_response))
     session.close()
+    if ledger is not None:
+        ledger.close()
     return summary
 
 
@@ -363,11 +384,14 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="Máximo de contactos pendientes para esta ejecución")
     parser.add_argument("--log-dir", type=Path, help="Carpeta de logs para esta ejecución")
     parser.add_argument("--apply", action="store_true", help="Crea/actualiza contactos reales en Mantra")
+    parser.add_argument("--offline", action="store_true", help="Envía un archivo sin conexión SQL y registra éxitos localmente")
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit debe ser mayor que cero")
     if args.json_file and args.limit is not None:
         parser.error("--limit se usa al consultar el SP, no con --json-file")
+    if args.offline and (not args.json_file or not args.apply or args.export_json):
+        parser.error("--offline requiere --json-file y --apply")
     config = load_config(args.config)
     if args.log_dir:
         config["log_dir"] = str(args.log_dir)
@@ -381,7 +405,7 @@ def main() -> int:
         return 0
     if args.codidtcot:
         parser.error("--codidtcot solo se usa con --export-json")
-    summary = run(config, run_date, args.apply, args.json_file, args.limit)
+    summary = run(config, run_date, args.apply, args.json_file, args.limit, args.offline)
     print(json.dumps({"fecha": run_date.isoformat(), "modo": "APLICAR" if args.apply else "DRY_RUN", **summary}, ensure_ascii=False))
     return 1 if summary["errores"] else 0
 

@@ -1,22 +1,20 @@
 # JS Industrial → Mantra ETL
 
-Piloto para seleccionar cotizaciones en SQL Server y crear o actualizar sus contactos en Mantra. Incluye el esquema extraído del backup, el procedimiento almacenado y el integrador Python. **Este alcance no envía mensajes ni plantillas.**
+Integración de cotizaciones de `JSIndustrial` con contactos de Mantra. **No envía mensajes ni plantillas.** La arquitectura actual usa dos servidores y transferencia de archivos en una sola dirección.
 
-## Flujo técnico
+## Flujo
 
-![Flujo técnico de la propuesta: tarea programada, SQL Server, script Python, Mantra API y archivo TXT diario](docs/flujo-mantra.png)
+1. El servidor de BD ejecuta `dbo.JS_usp_ExportarCotizacionesMantra` y publica un archivo JSON en una carpeta compartida. Un job de SQL Server Agent puede llamar [`run_exportar_json.ps1`](mantra_integracion/run_exportar_json.ps1). Esta etapa no usa las credenciales de Mantra.
+2. El servidor de envío **solo lee** la carpeta, copia el archivo localmente y llama al API mediante [`run_enviar_archivos.ps1`](mantra_integracion/run_enviar_archivos.ps1). Aquí se guardan `MANTRA_GROUP_ID` y `MANTRA_API_KEY`.
+3. Los teléfonos aceptados por Mantra se registran en un archivo SQLite local del servidor de envío para omitirlos en lotes futuros. El servidor de BD no recibe resultados y puede generar otra vez el mismo teléfono; el segundo servidor lo descarta al leerlo.
 
-Imagen original extraída de la página 2 de la propuesta. Allí figura un envío de plantilla, que quedó fuera del alcance actual; la implementación termina al crear o actualizar el contacto. La programación actual se prepara con SQL Server Agent en lugar del Programador de tareas mostrado en la propuesta. La hora de las 5:00 p. m. es ilustrativa.
+![Flujo técnico de la propuesta original](docs/flujo-mantra.png)
+
+La imagen pertenece a la propuesta inicial; el flujo operativo vigente y sus comandos están en el [runbook de dos servidores](mantra_integracion/runbook.md). El [mapeo activo de ocho campos](mantra_integracion/mapeo_campos_mantra.csv) conserva las posiciones `custom_*` ya usadas en Mantra. El SP mantiene 23 propiedades en el JSON de origen, pero solo ocho se envían al API.
 
 ## Carpetas
 
-- [`diagrama-mantra/`](diagrama-mantra/): diagrama editable de entidades, esquema JSON, auditoría de campos y `usp_ExportarCotizacionesMantra.sql`.
-- [`mantra_integracion/`](mantra_integracion/): script Python, configuración de ejemplo, pruebas, lanzador y [job de SQL Server Agent](mantra_integracion/registrar_job_sql_agent.sql) para Windows. Sigue el [runbook de instalación](mantra_integracion/runbook.md) antes de desplegar.
+- [`diagrama-mantra/`](diagrama-mantra/): esquema, diagrama de entidades, auditoría de campos y SQL del SP.
+- [`mantra_integracion/`](mantra_integracion/): exportador, emisor sin conexión SQL, scripts de programación, configuración de ejemplo y pruebas.
 
-## Estado
-
-La versión actual del SP se compiló contra una restauración temporal del backup y se probó con cinco cotizaciones ficticias: seleccionó las dos elegibles y dejó de devolver un teléfono tras confirmar su envío. Devuelve veinte campos personalizados más nombre, teléfono y correo por contacto. El integrador puede leer ese JSON directamente del SP o guardarlo en un archivo `.local.json` para una [prueba manual de exportación y envío](mantra_integracion/runbook.md#7-prueba-manual-con-archivo-json). [`contactos_prueba.json`](mantra_integracion/contactos_prueba.json) permite una simulación sin SQL Server. Se creó un contacto de prueba autorizado en Mantra (HTTP 201) y una prueba posterior confirmó que el API guarda `custom_11` y `custom_20`. El SP actual aún no se ha ejecutado en el servidor del cliente.
-
-La selección toma cotizaciones con más de dos días completos, excluye las que tienen `genero_orden_venta = true` (`numpedgen = 1`) porque ya se completaron y generaron orden de venta, y evita reenviar teléfonos registrados como exitosos en SQL. El job de SQL Server Agent puede ejecutar Python con autenticación integrada de Windows, sin usuario ni contraseña SQL en `.env`. Faltan equivalencias de códigos y una prueba de extremo a extremo desde el servidor del cliente. Las 23 columnas de la muestra caben en 20 campos personalizados más nombre, teléfono y correo. Cinco campos sin origen verificado salen `null` del SP y se omiten al llamar al API. El mapeo completo está en la [tabla de campos](mantra_integracion/mapeo_campos_mantra.csv) y en el [instructivo](mantra_integracion/README.md). Las credenciales de Mantra se guardan solo en el `.env` local, que Git ignora.
-
-Los archivos fuente con datos de clientes, backup, credenciales y logs operativos no se versionan.
+El backup, los JSON con contactos, las claves, los logs y el registro SQLite de éxitos no se versionan. En el modo de dos servidores, `dbo.JS_MantraExportaciones` conserva solo confirmaciones anteriores al cambio de arquitectura; los éxitos nuevos se registran en SQLite. Respaldar ese archivo es necesario para evitar reenvíos si se pierde el servidor de envío.

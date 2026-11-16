@@ -8,7 +8,8 @@ GO
   provisional (ver mapeo_cotizaciones_mantra.md).
   Selecciona contactos con una cotización de más de dos días completos,
   sin orden de venta generada y sin envío exitoso registrado para el teléfono.
-  El integrador confirma cada éxito mediante JS_usp_ConfirmarExportacionMantra.
+  En el modo de dos servidores, los éxitos se registran en el servidor de envío.
+  JS_usp_ConfirmarExportacionMantra queda para el modo directo anterior.
 */
 IF OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NULL
 BEGIN

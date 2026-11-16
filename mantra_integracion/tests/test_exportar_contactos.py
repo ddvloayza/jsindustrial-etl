@@ -252,6 +252,47 @@ class ContactExportTests(unittest.TestCase):
             request.assert_not_called()
             confirm.assert_not_called()
 
+    def test_offline_sender_uses_local_ledger_without_sql(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            sender = app.load_config(ROOT / "config.sender.example.json")
+            sender["log_dir"] = temporary
+            sender["ledger_path"] = str(Path(temporary) / "state" / "enviados.sqlite3")
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]):
+                app.save_manual_export(self.config, date(2026, 2, 5), path)
+            response = Mock(status_code=201)
+            response.json.return_value = {"resultOp": "created"}
+            with patch.dict(app.os.environ, {"MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"}), \
+                    patch.object(app, "connect_sql") as db, patch.object(app, "post", return_value=response) as request:
+                first = app.run(sender, date(2026, 2, 5), True, path, offline=True)
+                second = app.run(sender, date(2026, 2, 5), True, path, offline=True)
+            self.assertEqual(first["contactos_ok"], 1)
+            self.assertEqual(second["omitidos"], 1)
+            self.assertEqual(request.call_count, 1)
+            db.assert_not_called()
+
+    def test_offline_sender_retries_failed_contact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "pendientes.local.json"
+            sender = app.load_config(ROOT / "config.sender.example.json")
+            sender["log_dir"] = temporary
+            sender["ledger_path"] = str(Path(temporary) / "enviados.sqlite3")
+            selected = {**self.row, "_codidtcot": "COT0000001", "_telefono_normalizado": "987549210"}
+            with patch.object(app, "fetch_rows", return_value=[selected]):
+                app.save_manual_export(self.config, date(2026, 2, 5), path)
+            failed = Mock(status_code=500)
+            failed.json.return_value = {"message": "Error"}
+            accepted = Mock(status_code=201)
+            accepted.json.return_value = {"resultOp": "created"}
+            with patch.dict(app.os.environ, {"MANTRA_GROUP_ID": "test-group", "MANTRA_API_KEY": "test-key"}), \
+                    patch.object(app, "post", side_effect=[failed, accepted]) as request:
+                first = app.run(sender, date(2026, 2, 5), True, path, offline=True)
+                second = app.run(sender, date(2026, 2, 5), True, path, offline=True)
+            self.assertEqual(first["errores"], 1)
+            self.assertEqual(second["contactos_ok"], 1)
+            self.assertEqual(request.call_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
