@@ -53,6 +53,8 @@ notepad .\.env
 
 En `config.json`, cambiar `sql.server` por el servidor real y verificar `sql.database`, `sql.port` y `log_dir`. Mantener `"authentication": "windows"`. Si se usa una instancia con nombre en `sql.server`, quitar `sql.port` cuando no corresponda un puerto fijo.
 
+Si el servidor tiene ZKBioTime u otro Python que define `PYTHONHOME` o `PYTHONPATH`, limpiar esas variables solo en la consola donde se crea el entorno virtual. `run_mantra.ps1` las elimina del proceso antes de iniciar el Python del integrador para que el job no cargue librerías de otra versión.
+
 En `.env`, completar solamente:
 
 ```dotenv
