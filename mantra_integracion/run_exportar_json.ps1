@@ -23,7 +23,7 @@ $sqlSettings = @{}
 foreach ($line in [System.IO.File]::ReadAllLines($EnvFile, [System.Text.Encoding]::UTF8)) {
     if ($line.Trim().Length -eq 0 -or $line.TrimStart().StartsWith('#')) { continue }
     if ($line -notmatch '^([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
-        throw "Formato invalido en $EnvFile: use NOMBRE=valor sin espacios alrededor de ="
+        throw "Formato invalido en ${EnvFile}: use NOMBRE=valor sin espacios alrededor de ="
     }
     $sqlSettings[$matches[1]] = $matches[2]
 }
