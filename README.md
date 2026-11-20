@@ -13,7 +13,7 @@ Integración de cotizaciones de `JSIndustrial` con contactos de Mantra en **SRV-
     → dbo.JS_MantraExportaciones
 ```
 
-La tarea ejecuta [`run_mantra_local.ps1`](mantra_integracion/run_mantra_local.ps1). El login SQL `mantra`, su contraseña, `MANTRA_GROUP_ID` y `MANTRA_API_KEY` se leen de un `.env` local excluido de Git. Se usa `config.local.json` para seleccionar los campos enviados. El SP conserva las 23 propiedades del Excel en el JSON; Mantra recibe los ocho campos del [mapeo activo](mantra_integracion/mapeo_campos_mantra.csv). Los envíos exitosos quedan registrados en SQL para que el SP no los seleccione de nuevo.
+La tarea ejecuta [`run_mantra_local.ps1`](mantra_integracion/run_mantra_local.ps1). El login SQL `mantra`, su contraseña, `MANTRA_GROUP_ID` y `MANTRA_API_KEY` se leen de un `.env` local excluido de Git. Se usa `config.local.json` para seleccionar los campos enviados. El SP conserva las 23 propiedades del Excel en el JSON; Mantra recibe los ocho campos del [mapeo activo](mantra_integracion/mapeo_campos_mantra.csv). SQL guarda la última cotización enviada por teléfono: no repite esa cotización y permite actualizar el contacto cuando aparece otra posterior.
 
 El [runbook](mantra_integracion/runbook.md) contiene la instalación y la prueba manual antes de registrar la tarea diaria.
 

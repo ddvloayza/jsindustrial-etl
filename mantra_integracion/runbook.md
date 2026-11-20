@@ -4,7 +4,7 @@ La tarea de Windows ejecuta el flujo completo cada día a las **05:00, hora loca
 
 ## 1. Base de datos
 
-El SP de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) debe estar instalado en `JSIndustrial`. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) en SSMS con una cuenta administradora: concede al login SQL `mantra` lectura de `dbo.CotizacionesC` y ejecución de los SP de exportación y confirmación. La confirmación escribe en `dbo.JS_MantraExportaciones` mediante el SP; no se concede escritura directa sobre esa tabla.
+El SP de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) debe estar instalado en `JSIndustrial`. Volver a ejecutar ese archivo en SSMS al actualizar el repositorio para activar la actualización por cotización nueva; conserva la tabla y sus registros existentes. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) con una cuenta administradora: concede al login SQL `mantra` lectura de `dbo.CotizacionesC` y ejecución de los SP de exportación y confirmación. La confirmación escribe en `dbo.JS_MantraExportaciones` mediante el SP; no se concede escritura directa sobre esa tabla.
 
 ## 2. Preparar SRV-02
 
@@ -57,7 +57,7 @@ FROM dbo.JS_MantraExportaciones
 ORDER BY fecha_envio DESC;
 ```
 
-Cada ejecución crea su propio JSON; los archivos anteriores quedan en `outbox` como evidencia y este flujo solo envía el archivo recién generado. Los TXT de `C:\Mantra\logs` registran la exportación y el resultado del API. El teléfono se envía sin `+51`; `countryCode=51` se envía por separado. Si `referencia` está vacía, se envía `-`.
+Cada ejecución crea su propio JSON; los archivos anteriores quedan en `outbox` como evidencia y este flujo solo envía el archivo recién generado. Los TXT de `C:\Mantra\logs` registran la exportación y el resultado del API. El teléfono se envía sin `+51`; `countryCode=51` se envía por separado. Si `referencia` está vacía, se envía `-`. Una cotización nueva del mismo teléfono vuelve a ser elegible al cumplir el plazo y actualiza el contacto; la tabla guarda la última cotización enviada por teléfono.
 
 ## 4. Activar ejecución diaria a las 05:00
 

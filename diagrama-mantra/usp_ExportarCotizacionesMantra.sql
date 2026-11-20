@@ -7,9 +7,10 @@ GO
   Los campos que requieren catálogos externos devuelven su código/ID
   provisional (ver mapeo_cotizaciones_mantra.md).
   Selecciona contactos con una cotización de más de dos días completos,
-  sin orden de venta generada y sin envío exitoso registrado para el teléfono.
+  sin orden de venta generada. Envía una vez cada cotización más reciente
+  por teléfono; una nueva cotización actualiza el contacto de Mantra.
   El emisor local confirma cada contacto aceptado mediante
-  JS_usp_ConfirmarExportacionMantra para evitar reenvíos.
+  JS_usp_ConfirmarExportacionMantra para evitar reenvíos de esa cotización.
 */
 IF OBJECT_ID(N'dbo.JS_MantraExportaciones', N'U') IS NULL
 BEGIN
@@ -60,6 +61,7 @@ BEGIN
     SELECT
         c.codidtcot AS id_interno,
         tel.normalizado AS telefono_normalizado,
+        c.numpedgen AS orden_venta_generada,
         ROW_NUMBER() OVER (
             PARTITION BY tel.normalizado
             ORDER BY c.fecemidoc DESC, c.codidtcot DESC
@@ -117,28 +119,28 @@ BEGIN
         NULLIF(LTRIM(RTRIM(c.txtnrorev)), '')
     )) AS doc(serie, numero, revision)
     CROSS APPLY (VALUES (dbo.fn_NormalizarTelefonoMantra(c.txttlf001))) AS tel(normalizado)
-    WHERE (@FechaDesde IS NULL OR c.fecemidoc >= @FechaDesde)
-      AND (@FechaHasta IS NULL OR c.fecemidoc < DATEADD(day, 1, @FechaHasta))
-      AND (@Codidtcot IS NULL OR c.codidtcot = @Codidtcot)
-      -- Más de dos días completos: el día D procesa fechas anteriores a D-2.
-      AND c.fecemidoc < DATEADD(day, -2, @FechaProceso)
-      -- genero_orden_venta proviene de numpedgen (bit):
-      -- 1 = cotización completada con orden; no se envía a Mantra.
-      -- 0 = cotización sin orden; puede enviarse si cumple las otras reglas.
-      AND c.numpedgen = 0
-      AND tel.normalizado IS NOT NULL
-      AND NOT EXISTS (
-          SELECT 1 FROM dbo.JS_MantraExportaciones AS e
-          WHERE e.telefono = tel.normalizado
-      );
+    WHERE tel.normalizado IS NOT NULL;
 
-    -- Limitar después de filtrar y elegir una cotización por teléfono.
-    -- Sin límite se mantienen todos los pendientes, en orden de antigüedad.
+    -- Evaluar solo la cotización más reciente por teléfono. Si esa
+    -- cotización aún es reciente o ya generó orden, no revivir una anterior.
+    -- Una cotización distinta de la última confirmada sí vuelve a enviarse.
     DECLARE @Limite int = COALESCE(@MaxContactos, 2147483647);
     SELECT TOP (@Limite) *
     INTO #ContactosSeleccionados
     FROM #CotizacionesMantra
     WHERE fila_telefono = 1
+      AND (@FechaDesde IS NULL OR [Fecha] >= @FechaDesde)
+      AND (@FechaHasta IS NULL OR [Fecha] <= @FechaHasta)
+      AND (@Codidtcot IS NULL OR id_interno = @Codidtcot)
+      -- Más de dos días completos: el día D procesa fechas anteriores a D-2.
+      AND [Fecha] < DATEADD(day, -2, @FechaProceso)
+      -- numpedgen = 1 indica orden de venta; esa cotización no se envía.
+      AND orden_venta_generada = 0
+      AND NOT EXISTS (
+          SELECT 1 FROM dbo.JS_MantraExportaciones AS e
+          WHERE e.telefono = telefono_normalizado
+            AND e.codidtcot = id_interno
+      )
     ORDER BY [Fecha], [N° Cotización], id_interno;
 
     IF @ComoJson = 1
@@ -200,10 +202,17 @@ BEGIN
         THROW 50003, 'Telefono invalido para confirmar exportacion.', 1;
 
     BEGIN TRANSACTION;
-    IF NOT EXISTS (
+    IF EXISTS (
         SELECT 1 FROM dbo.JS_MantraExportaciones WITH (UPDLOCK, HOLDLOCK)
         WHERE telefono = @Telefono
     )
+        UPDATE dbo.JS_MantraExportaciones
+        SET codidtcot = @Codidtcot,
+            fecha_envio = SYSDATETIME(),
+            http_status = @HttpStatus
+        WHERE telefono = @Telefono
+          AND codidtcot <> @Codidtcot;
+    ELSE
         INSERT dbo.JS_MantraExportaciones (telefono, codidtcot, http_status)
         VALUES (@Telefono, @Codidtcot, @HttpStatus);
     COMMIT TRANSACTION;
