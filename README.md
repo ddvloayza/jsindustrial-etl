@@ -4,7 +4,7 @@ Integración de cotizaciones de `JSIndustrial` con contactos de Mantra. **No env
 
 ## Flujo
 
-1. El servidor de BD ejecuta `dbo.JS_usp_ExportarCotizacionesMantra` y publica un archivo JSON en una carpeta compartida. Un job de SQL Server Agent puede llamar [`run_exportar_json.ps1`](mantra_integracion/run_exportar_json.ps1). Esta etapa no usa las credenciales de Mantra.
+1. El servidor de BD ejecuta `dbo.JS_usp_ExportarCotizacionesMantra` y publica un archivo JSON en una carpeta compartida. Una tarea de Windows llama [`run_exportar_json.ps1`](mantra_integracion/run_exportar_json.ps1) con el login SQL `mantra`; su contraseña queda cifrada con DPAPI en ese servidor. Esta etapa no usa las credenciales de Mantra ni SQL Server Agent.
 2. El servidor de envío **solo lee** la carpeta, copia el archivo localmente y llama al API mediante [`run_enviar_archivos.ps1`](mantra_integracion/run_enviar_archivos.ps1). Aquí se guardan `MANTRA_GROUP_ID` y `MANTRA_API_KEY`.
 3. Los teléfonos aceptados por Mantra se registran en un archivo SQLite local del servidor de envío para omitirlos en lotes futuros. El servidor de BD no recibe resultados y puede generar otra vez el mismo teléfono; el segundo servidor lo descarta al leerlo.
 
