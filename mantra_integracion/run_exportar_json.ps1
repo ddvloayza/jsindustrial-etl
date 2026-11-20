@@ -31,6 +31,7 @@ if (-not $sqlSettings['MANTRA_SQL_USER'] -or -not $sqlSettings['MANTRA_SQL_PASSW
     throw "Complete MANTRA_SQL_USER y MANTRA_SQL_PASSWORD en $EnvFile"
 }
 $securePassword = ConvertTo-SecureString -String $sqlSettings['MANTRA_SQL_PASSWORD'] -AsPlainText -Force
+$securePassword.MakeReadOnly()
 $sqlCredential = [System.Data.SqlClient.SqlCredential]::new($sqlSettings['MANTRA_SQL_USER'], $securePassword)
 $sqlSettings.Remove('MANTRA_SQL_PASSWORD')
 $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new()
