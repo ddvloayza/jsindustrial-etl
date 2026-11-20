@@ -2,7 +2,7 @@ campo_mantra,propiedad_json,columna_excel,origen_sql,estado
 custom_1,numero_cotizacion,N° Cotización,txtserdoc + txtnrodoc + txtnrorev; respaldo codidtcot,Calculado; formato pendiente de validar
 custom_2,fecha,Fecha,fecemidoc,Directo
 custom_3,cliente,Cliente,txtrazsoc,Directo
-custom_5,vendedor,Vendedor,codmtrven,Código; falta catálogo descriptivo
+custom_5,vendedor,Vendedor,codmtrven,Nombre desde vendedores.json; código si no hay coincidencia
 custom_7,referencia,Referencia,txtrefcot,Directo
 custom_13,genero_orden_venta,Generó O/V,numpedgen,Booleano: 1 excluido; 0 se exporta como -
 data.name,nombre_contacto,Nombre del contacto,txtnomatt,Si está vacío usa cliente; obligatorio para envío

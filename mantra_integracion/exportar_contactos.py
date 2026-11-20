@@ -26,6 +26,8 @@ from dotenv import load_dotenv
 
 BASE_URL = "https://wbpback.mantra.chat"
 MANUAL_EXPORT_FORMAT = "mantra-export-v1"
+FECHA_MINIMA = date(2026, 10, 1)
+VENDEDORES_FILE = Path(__file__).with_name("vendedores.json")
 ALL_JSON_FIELDS = [
     "numero_cotizacion", "fecha", "cliente", "condicion_venta", "vendedor",
     "fuente_contacto", "referencia", "moneda", "total_documento",
@@ -52,6 +54,13 @@ def load_config(path: Path) -> dict:
     missing = set(custom.values()) - set(ALL_JSON_FIELDS)
     if missing:
         raise ValueError(f"Propiedades JSON del SP no reconocidas: {sorted(missing)}")
+    vendedores = json.loads(VENDEDORES_FILE.read_text(encoding="utf-8"))
+    if not isinstance(vendedores, dict) or not all(
+        isinstance(code, str) and code.isdecimal() and isinstance(name, str) and name.strip()
+        for code, name in vendedores.items()
+    ):
+        raise ValueError("vendedores.json debe mapear códigos numéricos a nombres")
+    config["_vendedores"] = vendedores
     return config
 
 
@@ -124,6 +133,9 @@ def build_contact(row: dict, config: dict) -> tuple[str, dict]:
         value = value_as_text(row.get(source))
         if source == "referencia" and value is None:
             value = "-"
+        if source == "vendedor" and value is not None:
+            code = value.lstrip("0") or "0"
+            value = config.get("_vendedores", {}).get(code, value)
         if value is not None:
             data[target] = value
     return phone, data
@@ -171,8 +183,9 @@ def fetch_rows(config: dict, run_date: date, codidtcot: str | None = None,
     try:
         cursor = connection.cursor()
         placeholder = sql_placeholder(config)
-        query = f"EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, @ComoJson=1"
-        params: tuple = (run_date,)
+        query = (f"EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso={placeholder}, "
+                 f"@FechaDesde={placeholder}, @ComoJson=1")
+        params: tuple = (run_date, FECHA_MINIMA)
         if codidtcot is not None:
             query += f", @Codidtcot={placeholder}"
             params += (codidtcot,)

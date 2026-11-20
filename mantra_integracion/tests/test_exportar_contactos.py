@@ -45,6 +45,11 @@ class ContactExportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Teléfono inválido"):
             app.build_contact(self.row, self.config)
 
+    def test_vendor_code_is_replaced_with_name_from_catalog(self):
+        self.row["vendedor"] = "00000011"
+        _, data = app.build_contact(self.row, self.config)
+        self.assertEqual(data["custom_5"], "JORGE CUBAS BEDRIÑANA")
+
     def test_sp_json_is_read(self):
         cursor = Mock()
         cursor.fetchall.return_value = [{
@@ -73,7 +78,8 @@ class ContactExportTests(unittest.TestCase):
             self.assertEqual(app.fetch_rows(self.config, date(2026, 2, 5), limit=1), [])
         query, values = cursor.execute.call_args.args
         self.assertIn("@MaxContactos=%s", query)
-        self.assertEqual(values, (date(2026, 2, 5), 1))
+        self.assertIn("@FechaDesde=%s", query)
+        self.assertEqual(values, (date(2026, 2, 5), date(2026, 10, 1), 1))
 
     def test_one_contact_dry_run_passes_limit_to_sp(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -57,7 +57,7 @@ FROM dbo.JS_MantraExportaciones
 ORDER BY fecha_envio DESC;
 ```
 
-Cada ejecución crea su propio JSON; los archivos anteriores quedan en `outbox` como evidencia y este flujo solo envía el archivo recién generado. Los TXT de `C:\Mantra\logs` registran la exportación y el resultado del API. El teléfono se envía sin `+51`; `countryCode=51` se envía por separado. Si `referencia` está vacía, se envía `-`. Una cotización nueva del mismo teléfono vuelve a ser elegible al cumplir el plazo y actualiza el contacto; la tabla guarda la última cotización enviada por teléfono.
+Cada ejecución crea su propio JSON; los archivos anteriores quedan en `outbox` como evidencia y este flujo solo envía el archivo recién generado. Los TXT de `C:\Mantra\logs` registran la exportación y el resultado del API. El teléfono se envía sin `+51`; `countryCode=51` se envía por separado. Si `referencia` está vacía, se envía `-`. Python usa `vendedores.json` para sustituir el código de vendedor por su nombre al llamar al API; si falta el código en el catálogo, conserva el código. El SP y los dos clientes de SQL fijan la fecha de inicio en el 1 de octubre de 2026. Una cotización nueva del mismo teléfono vuelve a ser elegible al cumplir el plazo y actualiza el contacto; la tabla guarda la última cotización enviada por teléfono.
 
 ## 4. Activar ejecución diaria a las 05:00
 

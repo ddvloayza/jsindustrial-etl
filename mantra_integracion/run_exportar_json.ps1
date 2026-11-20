@@ -48,6 +48,7 @@ $command.CommandText = 'dbo.JS_usp_ExportarCotizacionesMantra'
 $command.CommandTimeout = 120
 $command.Parameters.Add('@ComoJson', [System.Data.SqlDbType]::Bit).Value = 1
 $command.Parameters.Add('@FechaProceso', [System.Data.SqlDbType]::Date).Value = $fechaProceso
+$command.Parameters.Add('@FechaDesde', [System.Data.SqlDbType]::Date).Value = [DateTime]::new(2026, 10, 1)
 if ($Limit -gt 0) {
     $command.Parameters.Add('@MaxContactos', [System.Data.SqlDbType]::Int).Value = $Limit
 }

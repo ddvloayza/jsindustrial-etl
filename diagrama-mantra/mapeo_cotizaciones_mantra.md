@@ -12,7 +12,7 @@ El SP sigue devolviendo las 23 propiedades de origen en JSON. La configuración 
 | Fecha | `fecemidoc` | Directo |
 | Cliente | `txtrazsoc` | Directo |
 | Condicion de venta | `codfmapag` | Código; falta catálogo para descripción |
-| Vendedor | `codmtrven` | Código; falta catálogo para nombre |
+| Vendedor | `codmtrven` | El SP devuelve código; el emisor lo convierte a nombre mediante `mantra_integracion/vendedores.json` |
 | Fuente de contacto | `ID_Canal_Origen` | ID; falta catálogo para descripción |
 | Referencia | `txtrefcot` | Directo |
 | Nombre del contacto | `txtnomatt` | Directo |
@@ -35,8 +35,8 @@ El SP sigue devolviendo las 23 propiedades de origen en JSON. La configuración 
 ## Antes del envío al API
 
 1. Revisar con el cliente las etiquetas de los seis `custom_*` activos y si Mantra permite cambiarlas.
-2. Proporcionar los catálogos de forma de pago, vendedor, canal de origen, estado de oferta y usuario para exportar descripciones en vez de códigos.
+2. Proporcionar los catálogos de forma de pago, canal de origen, estado de oferta y usuario para exportar descripciones en vez de códigos. El catálogo de vendedores ya está en `mantra_integracion/vendedores.json`.
 3. Verificar con una cotización real la composición de `N° Cotización`, la moneda, `Total M.N.` y `Comentario`.
 4. Mantener la API key y el group ID en el integrador, fuera del procedimiento y del repositorio.
 
-Uso: `EXEC dbo.JS_usp_ExportarCotizacionesMantra @FechaProceso='2026-02-05', @ComoJson=1;` devuelve los contactos pendientes en `payload_json` y sus identificadores en `ids_json`. La fecha de ejemplo selecciona cotizaciones anteriores al 3 de febrero, sin orden de venta generada (`numpedgen = 0`) y cuyos teléfonos todavía no constan en `dbo.JS_MantraExportaciones`. En el modo actual de dos servidores, los HTTP 200/201 se registran en SQLite en el servidor de envío; el SP `dbo.JS_usp_ConfirmarExportacionMantra` se conserva para el modo directo con conexión SQL.
+Uso: `EXEC dbo.JS_usp_ExportarCotizacionesMantra @ComoJson=1;` devuelve los contactos pendientes en `payload_json` y sus identificadores en `ids_json`. La cotización más reciente de cada teléfono debe ser posterior o igual al 1 de octubre de 2026, tener más de dos días completos y no haber generado orden de venta (`numpedgen = 0`). Si su ID ya coincide con el último registrado en `dbo.JS_MantraExportaciones`, no se reenvía. El servidor `SRV-02` genera el JSON, envía contactos al API y confirma los HTTP 200/201 mediante `dbo.JS_usp_ConfirmarExportacionMantra`.
