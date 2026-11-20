@@ -35,12 +35,12 @@ $securePassword.MakeReadOnly()
 $sqlCredential = [System.Data.SqlClient.SqlCredential]::new($sqlSettings['MANTRA_SQL_USER'], $securePassword)
 $sqlSettings.Remove('MANTRA_SQL_PASSWORD')
 $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new()
-$builder.DataSource = $Server
-$builder.InitialCatalog = $Database
-$builder.IntegratedSecurity = $false
-$builder.ApplicationName = 'JSIndustrial Mantra JSON Export'
+$builder['Data Source'] = $Server
+$builder['Initial Catalog'] = $Database
+$builder['Integrated Security'] = $false
+$builder['Application Name'] = 'JSIndustrial Mantra JSON Export'
 $fechaProceso = (Get-Date).Date
-$connection = [System.Data.SqlClient.SqlConnection]::new($builder.ConnectionString, $sqlCredential)
+$connection = [System.Data.SqlClient.SqlConnection]::new($builder.ToString(), $sqlCredential)
 $command = $connection.CreateCommand()
 $command.CommandType = [System.Data.CommandType]::StoredProcedure
 $command.CommandText = 'dbo.JS_usp_ExportarCotizacionesMantra'
