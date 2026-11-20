@@ -8,6 +8,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Security -ErrorAction Stop
 if ($Limit -lt 0) { throw 'Limit debe ser mayor o igual a cero' }
 $logDir = 'C:\Mantra\logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null

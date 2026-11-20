@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Security -ErrorAction Stop
 $secretDir = Split-Path -Parent $CredentialFile
 New-Item -ItemType Directory -Force -Path $secretDir | Out-Null
 
@@ -21,6 +22,9 @@ try {
     $encrypted = [System.Security.Cryptography.ProtectedData]::Protect(
         $plainBytes, $null, [System.Security.Cryptography.DataProtectionScope]::LocalMachine
     )
+    if ($null -eq $encrypted -or $encrypted.Length -eq 0) {
+        throw 'No se pudo cifrar la credencial SQL'
+    }
     [System.IO.File]::WriteAllBytes($CredentialFile, $encrypted)
 }
 finally {
@@ -28,6 +32,9 @@ finally {
     if ($null -ne $plainBytes) { [Array]::Clear($plainBytes, 0, $plainBytes.Length) }
 }
 
+if (-not (Test-Path -LiteralPath $CredentialFile -PathType Leaf)) {
+    throw 'No se creo el archivo de credencial SQL'
+}
 & icacls.exe $CredentialFile /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F' | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo restringir el archivo de credencial' }
 Write-Output "Credencial SQL cifrada para este servidor: $CredentialFile"
