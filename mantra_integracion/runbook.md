@@ -4,7 +4,7 @@ La tarea de Windows ejecuta el flujo completo cada día a las **05:00, hora loca
 
 ## 1. Base de datos
 
-El SP de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) debe estar instalado en `JSIndustrial`. Volver a ejecutar ese archivo en SSMS al actualizar el repositorio para activar la actualización por cotización nueva; conserva la tabla y sus registros existentes. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) con una cuenta administradora: concede al login SQL `mantra` lectura de `dbo.CotizacionesC` y ejecución de los SP de exportación y confirmación. La confirmación escribe en `dbo.JS_MantraExportaciones` mediante el SP; no se concede escritura directa sobre esa tabla.
+El SP de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) debe estar instalado en `JSIndustrial`. Volver a ejecutar ese archivo en SSMS al actualizar el repositorio para activar la actualización por cotización nueva y el corte fijo desde el **1 de octubre de 2026**; conserva la tabla y sus registros existentes. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) con una cuenta administradora: concede al login SQL `mantra` lectura de `dbo.CotizacionesC` y ejecución de los SP de exportación y confirmación. La confirmación escribe en `dbo.JS_MantraExportaciones` mediante el SP; no se concede escritura directa sobre esa tabla.
 
 ## 2. Preparar SRV-02
 

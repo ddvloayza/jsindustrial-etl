@@ -23,6 +23,6 @@ El JSON conserva 23 propiedades de origen. `config.local.json` envía los siguie
 | `data.name` | `nombre_contacto` | `txtnomatt`, o cliente si falta |
 | `data.phone` | `telefono` | `txttlf001`, normalizado a nueve dígitos |
 
-El SP revisa la cotización más reciente por teléfono. La envía si tiene más de dos días completos, no generó orden de venta y su ID es distinto del último confirmado en `dbo.JS_MantraExportaciones`. Una cotización posterior actualiza el mismo contacto de Mantra; la tabla SQL conserva el ID de la última cotización enviada por teléfono. El [CSV de mapeo](mapeo_campos_mantra.csv) detalla estas posiciones.
+El SP revisa la cotización más reciente por teléfono. La envía si fue emitida desde el **1 de octubre de 2026**, tiene más de dos días completos, no generó orden de venta y su ID es distinto del último confirmado en `dbo.JS_MantraExportaciones`. Una cotización posterior actualiza el mismo contacto de Mantra; la tabla SQL conserva el ID de la última cotización enviada por teléfono. El [CSV de mapeo](mapeo_campos_mantra.csv) detalla estas posiciones.
 
 ![Flujo de la propuesta original](../docs/flujo-mantra.png)

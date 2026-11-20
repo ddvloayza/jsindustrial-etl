@@ -6,7 +6,8 @@ GO
   Fuente disponible: dbo.CotizacionesC del backup BD_MANTRA.bak.
   Los campos que requieren catálogos externos devuelven su código/ID
   provisional (ver mapeo_cotizaciones_mantra.md).
-  Selecciona contactos con una cotización de más de dos días completos,
+  Selecciona contactos con una cotización emitida desde el 01/10/2026
+  y de más de dos días completos,
   sin orden de venta generada. Envía una vez cada cotización más reciente
   por teléfono; una nueva cotización actualiza el contacto de Mantra.
   El emisor local confirma cada contacto aceptado mediante
@@ -129,6 +130,8 @@ BEGIN
     INTO #ContactosSeleccionados
     FROM #CotizacionesMantra
     WHERE fila_telefono = 1
+      -- Corte fijo de la primera carga; permanece vigente en años posteriores.
+      AND [Fecha] >= CONVERT(date, '20261001', 112)
       AND (@FechaDesde IS NULL OR [Fecha] >= @FechaDesde)
       AND (@FechaHasta IS NULL OR [Fecha] <= @FechaHasta)
       AND (@Codidtcot IS NULL OR id_interno = @Codidtcot)
