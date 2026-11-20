@@ -11,7 +11,7 @@ El servidor de envío solo lee la carpeta compartida; no devuelve resultados. Po
 
 ## 1. Servidor de BD
 
-Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. En este servidor, instalar Python, las dependencias de `requirements.txt` y Microsoft ODBC Driver 18. Crear `config.json` desde `config.example.json`, con `sql.server` apuntando a SQL Server, `sql.database = "JSIndustrial"` y autenticación de Windows si la cuenta de la tarea tiene permiso `EXECUTE` sobre el SP. No se necesita `.env` con claves de Mantra.
+Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. En este servidor, instalar Python y las dependencias de `requirements.txt`. Crear `config.json` desde `config.example.json`, con `sql.server = "SRV-02"`, `sql.database = "JSIndustrial"` y `sql.authentication = "sql"`. Copiar `.env.db.example` a `.env` y completar `MANTRA_SQL_USER` y `MANTRA_SQL_PASSWORD` con una cuenta SQL que pueda ejecutar el SP. El script usa `pymssql` para esta conexión; ODBC Driver 18 solo se necesita si se cambia a autenticación de Windows. No se necesitan claves de Mantra en este servidor.
 
 Crear `C:\Mantra\outbox` y compartirlo con **permiso de solo lectura** para la cuenta del servidor de envío. Dar escritura solo a la cuenta que genera archivos en el servidor de BD. Generar manualmente un lote de prueba:
 

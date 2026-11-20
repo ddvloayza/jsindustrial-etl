@@ -34,7 +34,7 @@ El SP exige más de dos días calendario completos, descarta `numpedgen=1` y tel
 
 ## Archivos de configuración
 
-- Servidor de BD: copiar `config.example.json` a `config.json`; configurar `sql.server`, `sql.database=JSIndustrial` y la cuenta de Windows con `EXECUTE` sobre el SP. No necesita `.env` con claves de Mantra.
+- Servidor de BD: copiar `config.example.json` a `config.json` (`sql.server=SRV-02`, `sql.database=JSIndustrial`, `sql.authentication=sql`) y `.env.db.example` a `.env`. Completar `MANTRA_SQL_USER` y `MANTRA_SQL_PASSWORD` con una cuenta SQL que pueda ejecutar el SP. No necesita claves de Mantra ni ODBC para esta autenticación.
 - Servidor de envío: copiar `config.sender.example.json` a `config.sender.json` y `.env.example` a `.env`; completar `MANTRA_GROUP_ID` y `MANTRA_API_KEY`. No necesita acceso SQL.
 - Los archivos locales de configuración, el JSON de contactos y el registro de éxitos están excluidos de Git. Dar acceso solo a las cuentas que ejecutan cada etapa.
 
