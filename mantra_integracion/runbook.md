@@ -11,17 +11,17 @@ El servidor de envío solo lee la carpeta compartida; no devuelve resultados. Po
 
 ## 1. Servidor de BD
 
-Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. En este servidor, instalar Python y las dependencias de `requirements.txt`. Crear `config.json` desde `config.example.json`, con `sql.server = "SRV-02"`, `sql.database = "JSIndustrial"` y `sql.authentication = "sql"`. Copiar `.env.db.example` a `.env` y completar `MANTRA_SQL_USER` y `MANTRA_SQL_PASSWORD` con una cuenta SQL que pueda ejecutar el SP. El script usa `pymssql` para esta conexión; ODBC Driver 18 solo se necesita si se cambia a autenticación de Windows. No se necesitan claves de Mantra en este servidor.
+Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. El procedimiento devuelve el JSON como resultado de consulta; SQL Server Agent ejecuta [`run_exportar_json.ps1`](run_exportar_json.ps1) para escribirlo en disco. Ese script usa la identidad de Windows del servicio SQL Server Agent para conectarse a `SRV-02`; no requiere Python, ODBC, `config.json`, `.env` ni credenciales SQL guardadas. La cuenta del servicio necesita acceso a `JSIndustrial` y permiso de escritura en `C:\Mantra\outbox`.
 
-Crear `C:\Mantra\outbox` y compartirlo con **permiso de solo lectura** para la cuenta del servidor de envío. Dar escritura solo a la cuenta que genera archivos en el servidor de BD. Generar manualmente un lote de prueba:
+Crear `C:\Mantra\outbox` y compartirlo con **permiso de solo lectura** para la cuenta del servidor de envío. Dar escritura solo a la cuenta de SQL Server Agent. Ejecutar [`registrar_job_sql_agent.sql`](registrar_job_sql_agent.sql) en SSMS: crea un job de prueba con `-Limit 1` y horario deshabilitado. Luego lanzarlo manualmente:
 
-```powershell
-powershell -File C:\Mantra\jsindustrial-etl\mantra_integracion\run_exportar_json.ps1 -PythonExe C:\Mantra\venv\Scripts\python.exe -OutDir C:\Mantra\outbox -Limit 1
+```sql
+EXEC msdb.dbo.sp_start_job @job_name = N'JS Industrial - Generar JSON Mantra';
 ```
 
-El comando devuelve la ruta del archivo `cotizaciones_AAAAMMDD_HHMMSS_mmm.local.json`; no llama a Mantra. El JSON se escribe primero como `.tmp` y luego se publica con el nombre final para que el segundo servidor no lea un archivo incompleto. Revisar el archivo y el número de contactos antes de programar la tarea.
+Revisar el historial del job y el archivo `C:\Mantra\outbox\cotizaciones_AAAAMMDD_HHMMSS_mmm.local.json`; no se llama a Mantra. El JSON se escribe primero como `.tmp` y luego se publica con el nombre final para que el segundo servidor no lea un archivo incompleto. Si el job falla por acceso, revisar la identidad del servicio SQL Server Agent y sus permisos SQL y de carpeta. Después de validar el archivo, ejecutar [`activar_job_sql_agent.sql`](activar_job_sql_agent.sql) en SSMS: quita el límite y habilita el horario diario.
 
-Para ejecutarlo diariamente con SQL Server Agent, editar `@ProxyName`, `@Launcher`, `@PythonExe`, `@OutDir` y `@HoraHHMMSS` en [`registrar_job_sql_agent.sql`](registrar_job_sql_agent.sql), y ejecutarlo en SSMS. El job **solo genera JSON**. También se puede programar `run_exportar_json.ps1` con el Programador de tareas de Windows; activar un solo programador.
+Editar `@HoraHHMMSS` en `registrar_job_sql_agent.sql` antes de instalarlo si se necesita otra hora. El job **solo genera JSON**. Mantener un solo programador para esta exportación.
 
 ## 2. Servidor de envío
 

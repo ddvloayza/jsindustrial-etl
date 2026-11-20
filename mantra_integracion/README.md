@@ -11,7 +11,7 @@ SP → JSON en carpeta compartida  ──lectura──> copia local → API Mant
                                            registro SQLite local
 ```
 
-El servidor de BD programa [`run_exportar_json.ps1`](run_exportar_json.ps1). Este llama `dbo.JS_usp_ExportarCotizacionesMantra` y guarda un archivo `*.local.json` en `C:\Mantra\outbox`; no necesita la API key. La cuenta del segundo servidor solo necesita **lectura** en la carpeta compartida. Allí, [`run_enviar_archivos.ps1`](run_enviar_archivos.ps1) copia los archivos, llama a Mantra y registra en `C:\Mantra\state\enviados.sqlite3` cada teléfono aceptado con HTTP 200/201. [`registrar_tarea.ps1`](registrar_tarea.ps1) programa esta segunda etapa.
+En el servidor de BD, SQL Server Agent ejecuta [`run_exportar_json.ps1`](run_exportar_json.ps1) con su identidad de Windows. El script llama a `dbo.JS_usp_ExportarCotizacionesMantra` y guarda un archivo `*.local.json` en `C:\Mantra\outbox`; no necesita usuario ni contraseña SQL, Python ni claves de Mantra. La cuenta del segundo servidor solo necesita **lectura** en la carpeta compartida. Allí, [`run_enviar_archivos.ps1`](run_enviar_archivos.ps1) copia los archivos, llama a Mantra y registra en `C:\Mantra\state\enviados.sqlite3` cada teléfono aceptado con HTTP 200/201. [`registrar_tarea.ps1`](registrar_tarea.ps1) programa esta segunda etapa.
 
 Como no hay canal de retorno del segundo servidor a SQL, `dbo.JS_MantraExportaciones` no refleja los éxitos nuevos. El SP puede generar nuevamente un teléfono en lotes posteriores; el registro SQLite del servidor de envío lo omite. Hay que respaldar ese archivo. Un error de API no se marca como éxito y se reintenta. Mantra recibe el teléfono sin `+51` y `countryCode=51` por separado.
 
@@ -34,8 +34,8 @@ El SP exige más de dos días calendario completos, descarta `numpedgen=1` y tel
 
 ## Archivos de configuración
 
-- Servidor de BD: copiar `config.example.json` a `config.json` (`sql.server=SRV-02`, `sql.database=JSIndustrial`, `sql.authentication=sql`) y `.env.db.example` a `.env`. Completar `MANTRA_SQL_USER` y `MANTRA_SQL_PASSWORD` con una cuenta SQL que pueda ejecutar el SP. No necesita claves de Mantra ni ODBC para esta autenticación.
+- Servidor de BD: el job usa `SRV-02` y `JSIndustrial` desde `run_exportar_json.ps1`. No requiere `config.json` ni `.env`. La cuenta de SQL Server Agent debe tener acceso a la BD y escritura en `C:\Mantra\outbox`.
 - Servidor de envío: copiar `config.sender.example.json` a `config.sender.json` y `.env.example` a `.env`; completar `MANTRA_GROUP_ID` y `MANTRA_API_KEY`. No necesita acceso SQL.
 - Los archivos locales de configuración, el JSON de contactos y el registro de éxitos están excluidos de Git. Dar acceso solo a las cuentas que ejecutan cada etapa.
 
-El script antiguo [`run_mantra.ps1`](run_mantra.ps1) sigue disponible para pruebas directas con conexión SQL desde un mismo servidor, pero **no forma parte del flujo de dos servidores**. El job SQL Agent actual solo genera el JSON; el envío se programa en el segundo servidor.
+El script antiguo [`run_mantra.ps1`](run_mantra.ps1) sigue disponible para pruebas directas con conexión SQL desde un mismo servidor, pero **no forma parte del flujo de dos servidores**. El job SQL Agent actual solo genera el JSON; el envío se programa en el segundo servidor. [`registrar_job_sql_agent.sql`](registrar_job_sql_agent.sql) crea el job limitado a un contacto y con horario deshabilitado. Después de revisar el archivo, [`activar_job_sql_agent.sql`](activar_job_sql_agent.sql) quita ese límite y activa el horario diario.

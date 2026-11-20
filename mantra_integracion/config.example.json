@@ -1,9 +1,10 @@
 {
   "sql": {
-    "server": "SRV-02",
+    "server": "SERVIDOR_SQL",
     "port": 1433,
     "database": "JSIndustrial",
-    "authentication": "sql"
+    "authentication": "windows",
+    "odbc_driver": "ODBC Driver 18 for SQL Server"
   },
   "log_dir": "C:\\Mantra\\logs",
   "country_code": "51",
