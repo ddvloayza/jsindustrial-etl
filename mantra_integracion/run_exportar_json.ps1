@@ -1,40 +1,38 @@
 param(
     [string]$Server = 'SRV-02',
     [string]$Database = 'JSIndustrial',
-    [string]$SqlUser = 'mantra',
-    [string]$CredentialFile = 'C:\Mantra\secrets\sql-mantra.bin',
+    [string]$EnvFile = '',
     [string]$OutDir = 'C:\Mantra\outbox',
     [int]$Limit = 0
 )
 
 $ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName System.Security -ErrorAction Stop
+if (-not $EnvFile) { $EnvFile = Join-Path $PSScriptRoot '.env' }
 if ($Limit -lt 0) { throw 'Limit debe ser mayor o igual a cero' }
 $logDir = 'C:\Mantra\logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $logFile = Join-Path $logDir ("exportar_{0}.txt" -f (Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
 Start-Transcript -Path $logFile | Out-Null
 
-# La tarea de Windows lee la contraseña cifrada con DPAPI en este servidor.
+# La tarea de Windows lee la cuenta SQL desde un .env local excluido de Git.
 # El SP devuelve dos arreglos JSON; el script los envuelve sin cambiar sus valores.
-if (-not (Test-Path -LiteralPath $CredentialFile -PathType Leaf)) {
-    throw "Falta la credencial SQL cifrada: $CredentialFile"
+if (-not (Test-Path -LiteralPath $EnvFile -PathType Leaf)) {
+    throw "Falta el archivo de credenciales SQL: $EnvFile"
 }
-$encrypted = [System.IO.File]::ReadAllBytes($CredentialFile)
-$plainBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
-    $encrypted, $null, [System.Security.Cryptography.DataProtectionScope]::LocalMachine
-)
-try {
-    $chars = [System.Text.Encoding]::Unicode.GetChars($plainBytes)
-    $securePassword = [System.Security.SecureString]::new()
-    foreach ($character in $chars) { $securePassword.AppendChar($character) }
-    $securePassword.MakeReadOnly()
+$sqlSettings = @{}
+foreach ($line in [System.IO.File]::ReadAllLines($EnvFile, [System.Text.Encoding]::UTF8)) {
+    if ($line.Trim().Length -eq 0 -or $line.TrimStart().StartsWith('#')) { continue }
+    if ($line -notmatch '^([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
+        throw "Formato invalido en $EnvFile: use NOMBRE=valor sin espacios alrededor de ="
+    }
+    $sqlSettings[$matches[1]] = $matches[2]
 }
-finally {
-    [Array]::Clear($plainBytes, 0, $plainBytes.Length)
-    if ($null -ne $chars) { [Array]::Clear($chars, 0, $chars.Length) }
+if (-not $sqlSettings['MANTRA_SQL_USER'] -or -not $sqlSettings['MANTRA_SQL_PASSWORD']) {
+    throw "Complete MANTRA_SQL_USER y MANTRA_SQL_PASSWORD en $EnvFile"
 }
-$sqlCredential = [System.Data.SqlClient.SqlCredential]::new($SqlUser, $securePassword)
+$securePassword = ConvertTo-SecureString -String $sqlSettings['MANTRA_SQL_PASSWORD'] -AsPlainText -Force
+$sqlCredential = [System.Data.SqlClient.SqlCredential]::new($sqlSettings['MANTRA_SQL_USER'], $securePassword)
+$sqlSettings.Remove('MANTRA_SQL_PASSWORD')
 $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new()
 $builder.DataSource = $Server
 $builder.InitialCatalog = $Database

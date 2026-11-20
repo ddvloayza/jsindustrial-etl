@@ -7,8 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $launcher = Join-Path $PSScriptRoot 'run_exportar_json.ps1'
 if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { throw "Falta $launcher" }
-if (-not (Test-Path -LiteralPath 'C:\Mantra\secrets\sql-mantra.bin' -PathType Leaf)) {
-    throw 'Primero ejecute guardar_credencial_sql.ps1'
+if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env') -PathType Leaf)) {
+    throw 'Primero cree mantra_integracion\.env con el usuario y la contrasena SQL'
 }
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     throw "La tarea ya existe: $TaskName"

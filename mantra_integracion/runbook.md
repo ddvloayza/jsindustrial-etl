@@ -11,18 +11,20 @@ El servidor de envío solo lee la carpeta compartida; no devuelve resultados. Po
 
 ## 1. Servidor de BD
 
-Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) en SSMS después de crear el login SQL `mantra`. El procedimiento devuelve el JSON como resultado de consulta; [`run_exportar_json.ps1`](run_exportar_json.ps1) lo escribe en disco. El script se conecta a `SRV-02` con ese login. La contraseña se pide una vez y se cifra con DPAPI para este servidor; no va en Git, `config.json`, `.env` ni en la tarea. La cuenta SQL recibe `CONNECT` a `JSIndustrial`, `SELECT` sobre `dbo.CotizacionesC` y `EXECUTE` sobre `dbo.JS_usp_ExportarCotizacionesMantra`. El servidor de BD no requiere Python, ODBC ni SQL Server Agent.
+Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) en SSMS después de crear el login SQL `mantra`. El procedimiento devuelve el JSON como resultado de consulta; [`run_exportar_json.ps1`](run_exportar_json.ps1) lo escribe en disco. El script se conecta a `SRV-02` con el usuario y la contraseña SQL de un `.env` local. La cuenta SQL recibe `CONNECT` a `JSIndustrial`, `SELECT` sobre `dbo.CotizacionesC` y `EXECUTE` sobre `dbo.JS_usp_ExportarCotizacionesMantra`. El servidor de BD no requiere Python, ODBC ni SQL Server Agent.
 
-En PowerShell como administrador, actualizar el repositorio y guardar la contraseña SQL sin mostrarla ni escribirla en un archivo de texto:
+En PowerShell como administrador, actualizar el repositorio, crear el `.env` y completar la contraseña en Notepad. El valor se escribe sin comillas; los caracteres `#` y `=` forman parte de la contraseña si aparecen después del primer `=`:
 
 ```powershell
 cd C:\Mantra\jsindustrial-etl
 git pull
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\mantra_integracion\guardar_credencial_sql.ps1
+if (-not (Test-Path .\mantra_integracion\.env)) { Copy-Item .\mantra_integracion\.env.db.example .\mantra_integracion\.env }
+notepad .\mantra_integracion\.env
+icacls.exe .\mantra_integracion\.env /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F'
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\mantra_integracion\run_exportar_json.ps1 -Limit 1
 ```
 
-Revisar el archivo `C:\Mantra\outbox\cotizaciones_AAAAMMDD_HHMMSS_mmm.local.json` y el TXT de `C:\Mantra\logs`; no se llama a Mantra. El JSON se escribe primero como `.tmp` y luego se publica con el nombre final para que el segundo servidor no lea un archivo incompleto. El archivo cifrado `C:\Mantra\secrets\sql-mantra.bin` solo es legible por `SYSTEM` y Administradores; por usar DPAPI `LocalMachine`, otros administradores de ese equipo también pueden descifrarlo. Respaldar la contraseña por un medio seguro, porque el archivo cifrado no funciona en otro servidor.
+Revisar el archivo `C:\Mantra\outbox\cotizaciones_AAAAMMDD_HHMMSS_mmm.local.json` y el TXT de `C:\Mantra\logs`; no se llama a Mantra. El JSON se escribe primero como `.tmp` y luego se publica con el nombre final para que el segundo servidor no lea un archivo incompleto. El `.env` guarda la contraseña SQL en texto: no compartirlo ni publicarlo, y respaldar la contraseña por un medio seguro.
 
 Crear `C:\Mantra\outbox` como carpeta compartida con **permiso de solo lectura** para la cuenta del servidor de envío. Registrar la tarea sin horario y con límite de un contacto, ejecutarla manualmente como `SYSTEM` y comprobar el resultado:
 
