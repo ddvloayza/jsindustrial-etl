@@ -1,0 +1,19 @@
+{
+  "sql": {
+    "server": "SRV-02",
+    "port": 1433,
+    "database": "JSIndustrial",
+    "authentication": "sql"
+  },
+  "log_dir": "C:\\Mantra\\logs",
+  "country_code": "51",
+  "include_email": false,
+  "custom_fields": {
+    "custom_1": "numero_cotizacion",
+    "custom_2": "fecha",
+    "custom_3": "cliente",
+    "custom_5": "vendedor",
+    "custom_7": "referencia",
+    "custom_13": "genero_orden_venta"
+  }
+}

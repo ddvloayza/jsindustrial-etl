@@ -8,6 +8,8 @@ IF OBJECT_ID(N'dbo.CotizacionesC', N'U') IS NULL
     THROW 50021, 'Falta dbo.CotizacionesC.', 1;
 IF OBJECT_ID(N'dbo.JS_usp_ExportarCotizacionesMantra', N'P') IS NULL
     THROW 50022, 'Falta el SP de exportacion.', 1;
+IF OBJECT_ID(N'dbo.JS_usp_ConfirmarExportacionMantra', N'P') IS NULL
+    THROW 50023, 'Falta el SP de confirmacion.', 1;
 
 IF USER_ID(N'mantra') IS NULL
     CREATE USER [mantra] FOR LOGIN [mantra];
@@ -15,4 +17,5 @@ IF USER_ID(N'mantra') IS NULL
 GRANT CONNECT TO [mantra];
 GRANT SELECT ON OBJECT::dbo.CotizacionesC TO [mantra];
 GRANT EXECUTE ON OBJECT::dbo.JS_usp_ExportarCotizacionesMantra TO [mantra];
+GRANT EXECUTE ON OBJECT::dbo.JS_usp_ConfirmarExportacionMantra TO [mantra];
 GO

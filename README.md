@@ -1,20 +1,29 @@
 # JS Industrial → Mantra ETL
 
-Integración de cotizaciones de `JSIndustrial` con contactos de Mantra. **No envía mensajes ni plantillas.** La arquitectura actual usa dos servidores y transferencia de archivos en una sola dirección.
+Integración de cotizaciones de `JSIndustrial` con contactos de Mantra en **SRV-02**. Crea o actualiza contactos; no envía mensajes ni plantillas.
 
-## Flujo
+## Flujo diario
 
-1. El servidor de BD ejecuta `dbo.JS_usp_ExportarCotizacionesMantra` y publica un archivo JSON en una carpeta compartida. Una tarea de Windows llama [`run_exportar_json.ps1`](mantra_integracion/run_exportar_json.ps1) con el login SQL `mantra`, cuya contraseña se lee de un `.env` local excluido de Git. Esta etapa no usa las credenciales de Mantra ni SQL Server Agent.
-2. El servidor de envío **solo lee** la carpeta, copia el archivo localmente y llama al API mediante [`run_enviar_archivos.ps1`](mantra_integracion/run_enviar_archivos.ps1). Aquí se guardan `MANTRA_GROUP_ID` y `MANTRA_API_KEY`.
-3. Los teléfonos aceptados por Mantra se registran en un archivo SQLite local del servidor de envío para omitirlos en lotes futuros. El servidor de BD no recibe resultados y puede generar otra vez el mismo teléfono; el segundo servidor lo descarta al leerlo.
+```text
+05:00, tarea de Windows en SRV-02
+    → dbo.JS_usp_ExportarCotizacionesMantra
+    → C:\Mantra\outbox\cotizaciones_*.local.json
+    → API Mantra /contacts/new
+    → dbo.JS_usp_ConfirmarExportacionMantra
+    → dbo.JS_MantraExportaciones
+```
+
+La tarea ejecuta [`run_mantra_local.ps1`](mantra_integracion/run_mantra_local.ps1). El login SQL `mantra`, su contraseña, `MANTRA_GROUP_ID` y `MANTRA_API_KEY` se leen de un `.env` local excluido de Git. Se usa `config.local.json` para seleccionar los campos enviados. El SP conserva las 23 propiedades del Excel en el JSON; Mantra recibe los ocho campos del [mapeo activo](mantra_integracion/mapeo_campos_mantra.csv). Los envíos exitosos quedan registrados en SQL para que el SP no los seleccione de nuevo.
+
+El [runbook](mantra_integracion/runbook.md) contiene la instalación y la prueba manual antes de registrar la tarea diaria.
 
 ![Flujo técnico de la propuesta original](docs/flujo-mantra.png)
 
-La imagen pertenece a la propuesta inicial; el flujo operativo vigente y sus comandos están en el [runbook de dos servidores](mantra_integracion/runbook.md). El [mapeo activo de ocho campos](mantra_integracion/mapeo_campos_mantra.csv) conserva las posiciones `custom_*` ya usadas en Mantra. El SP mantiene 23 propiedades en el JSON de origen, pero solo ocho se envían al API.
+La imagen corresponde a la propuesta inicial; el flujo operativo vigente es el descrito arriba.
 
 ## Carpetas
 
 - [`diagrama-mantra/`](diagrama-mantra/): esquema, diagrama de entidades, auditoría de campos y SQL del SP.
-- [`mantra_integracion/`](mantra_integracion/): exportador, emisor sin conexión SQL, scripts de programación, configuración de ejemplo y pruebas.
+- [`mantra_integracion/`](mantra_integracion/): exportación JSON, envío al API, programación, configuración de ejemplo y pruebas.
 
-El backup, los JSON con contactos, las claves, los logs y el registro SQLite de éxitos no se versionan. En el modo de dos servidores, `dbo.JS_MantraExportaciones` conserva solo confirmaciones anteriores al cambio de arquitectura; los éxitos nuevos se registran en SQLite. Respaldar ese archivo es necesario para evitar reenvíos si se pierde el servidor de envío.
+El backup, los JSON con contactos, las claves y los logs no se versionan.

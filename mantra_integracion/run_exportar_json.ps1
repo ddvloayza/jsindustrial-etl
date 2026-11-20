@@ -3,6 +3,7 @@ param(
     [string]$Database = 'JSIndustrial',
     [string]$EnvFile = '',
     [string]$OutDir = 'C:\Mantra\outbox',
+    [string]$OutputPath = '',
     [int]$Limit = 0
 )
 
@@ -77,7 +78,11 @@ $fechaJson = $fechaProceso.ToString('yyyy-MM-dd', [Globalization.CultureInfo]::I
 $document = '{"format":"mantra-export-v1","fecha_proceso":"' + $fechaJson + '","contacts":' + $payload + ',"ids":' + $ids + '}'
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd_HHmmss_fff'
-$output = Join-Path $OutDir "cotizaciones_$stamp.local.json"
+$output = if ($OutputPath) { $OutputPath } else { Join-Path $OutDir "cotizaciones_$stamp.local.json" }
+if (-not $output.EndsWith('.local.json', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'El archivo de salida debe terminar en .local.json'
+}
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $output) | Out-Null
 $temporary = "$output.tmp"
 try {
     [System.IO.File]::WriteAllText($temporary, $document, [System.Text.UTF8Encoding]::new($false))
