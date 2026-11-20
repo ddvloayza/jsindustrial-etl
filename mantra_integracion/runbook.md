@@ -9,6 +9,8 @@
 
 El servidor de envío solo lee la carpeta compartida; no devuelve resultados. Por eso `dbo.JS_MantraExportaciones` **no registra los éxitos nuevos** en este modo y el servidor de BD puede incluir los mismos teléfonos en lotes posteriores. El registro local del servidor de envío los omite. Hay que respaldar `enviados.sqlite3`: perderlo puede provocar nuevos envíos. Los fallos de API quedan pendientes y se reintentan al leer el archivo otra vez. El segundo servidor tampoco puede comprobar si una cotización cambió después de generar el JSON; por eso conviene enviarlo poco después de exportarlo.
 
+Si `txtrefcot` está vacío o solo contiene espacios, el SP escribe `"referencia":"-"`. El exportador del segundo servidor aplica el mismo valor al enviar archivos JSON creados antes de esta corrección.
+
 ## 1. Servidor de BD
 
 Instalar el SQL de [`../diagrama-mantra/usp_ExportarCotizacionesMantra.sql`](../diagrama-mantra/usp_ExportarCotizacionesMantra.sql) en `JSIndustrial`. Ejecutar [`permisos_login_mantra.sql`](permisos_login_mantra.sql) en SSMS después de crear el login SQL `mantra`. El procedimiento devuelve el JSON como resultado de consulta; [`run_exportar_json.ps1`](run_exportar_json.ps1) lo escribe en disco. El script se conecta a `SRV-02` con el usuario y la contraseña SQL de un `.env` local. La cuenta SQL recibe `CONNECT` a `JSIndustrial`, `SELECT` sobre `dbo.CotizacionesC` y `EXECUTE` sobre `dbo.JS_usp_ExportarCotizacionesMantra`. El servidor de BD no requiere Python, ODBC ni SQL Server Agent.

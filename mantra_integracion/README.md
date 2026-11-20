@@ -25,7 +25,7 @@ El JSON de origen conserva 23 propiedades para auditoría. `config.sender.json` 
 | `custom_2` | `fecha` | `fecemidoc` |
 | `custom_3` | `cliente` | `txtrazsoc` |
 | `custom_5` | `vendedor` | `codmtrven` (código) |
-| `custom_7` | `referencia` | `txtrefcot` |
+| `custom_7` | `referencia` | `txtrefcot`; `-` si está vacío o solo contiene espacios |
 | `custom_13` | `genero_orden_venta` | `numpedgen`; solo sale `-` porque `1` se excluye |
 | `data.name` | `nombre_contacto` | `txtnomatt`, o cliente si está vacío |
 | `data.phone` | `telefono` | `txttlf001` normalizado |

@@ -122,6 +122,8 @@ def build_contact(row: dict, config: dict) -> tuple[str, dict]:
             data["email"] = email
     for target, source in config.get("custom_fields", {}).items():
         value = value_as_text(row.get(source))
+        if source == "referencia" and value is None:
+            value = "-"
         if value is not None:
             data[target] = value
     return phone, data

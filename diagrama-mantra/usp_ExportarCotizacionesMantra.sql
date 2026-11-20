@@ -82,7 +82,7 @@ BEGIN
         LTRIM(RTRIM(c.codfmapag)) AS [Condicion de venta],
         LTRIM(RTRIM(c.codmtrven)) AS [Vendedor],
         CONVERT(varchar(20), c.ID_Canal_Origen) AS [Fuente de contacto],
-        c.txtrefcot AS [Referencia],
+        COALESCE(NULLIF(LTRIM(RTRIM(c.txtrefcot)), ''), '-') AS [Referencia],
         c.txtnomatt AS [Nombre del contacto],
         CAST(NULL AS varchar(100)) AS [Cargo],
         CAST(NULL AS varchar(100)) AS [Area],
