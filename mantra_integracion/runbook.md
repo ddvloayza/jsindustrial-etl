@@ -43,7 +43,18 @@ El horario es el del servidor. Mantener desactivado el job parcial de SQL Server
 
 ## 2. Servidor de envío
 
-Instalar Python y las dependencias de `requirements.txt`. Copiar `config.sender.example.json` a `config.sender.json` y `.env.example` a `.env` en `C:\Mantra\jsindustrial-etl\mantra_integracion`. En `.env`, completar `MANTRA_GROUP_ID` y `MANTRA_API_KEY`. La configuración de este servidor no contiene `sql.server`, usuario ni contraseña de SQL.
+Instalar Python 3.11 y preparar este servidor con PowerShell:
+
+```powershell
+cd C:\Mantra\jsindustrial-etl\mantra_integracion
+py -3.11 -m venv C:\Mantra\venv
+& C:\Mantra\venv\Scripts\python.exe -m pip install -r .\requirements.txt
+if (-not (Test-Path .\config.sender.json)) { Copy-Item .\config.sender.example.json .\config.sender.json }
+if (-not (Test-Path .\.env)) { Copy-Item .\.env.example .\.env }
+notepad .\.env
+```
+
+En `.env`, completar `MANTRA_GROUP_ID` y `MANTRA_API_KEY` sin publicar esos valores. Si ya existen archivos locales, conservar sus valores y evitar sobrescribirlos. La configuración de este servidor no contiene `sql.server`, usuario ni contraseña de SQL.
 
 La cuenta que ejecuta la tarea necesita lectura en la carpeta compartida, escritura en `C:\Mantra\inbox`, `C:\Mantra\logs` y `C:\Mantra\state`, y acceso HTTPS a Mantra. Probar manualmente con la ruta UNC real:
 
